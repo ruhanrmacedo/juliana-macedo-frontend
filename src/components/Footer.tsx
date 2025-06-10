@@ -11,7 +11,7 @@ const Footer = () => {
               Juliana Macedo
             </h3>
             <p className="text-white/80">
-              Nutricionista e criadora de conteúdo, ajudando você a ter uma vida mais saudável.
+              Criadora de conteúdo, ajudando você a ter uma vida mais saudável.
             </p>
           </div>
           

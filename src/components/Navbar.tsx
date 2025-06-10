@@ -1,6 +1,7 @@
 
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,7 +22,7 @@ const Navbar = () => {
             <a href="/receitas" className="nav-link">Receitas</a>
             <a href="/artigos" className="nav-link">Artigos</a>
             <a href="/calculadoras" className="nav-link">Calculadoras</a>
-            <button className="btn-primary">Login</button>
+            <Link to="/login" className="btn-primary">Login</Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -41,7 +42,7 @@ const Navbar = () => {
               <a href="/receitas" className="block nav-link py-2">Receitas</a>
               <a href="/artigos" className="block nav-link py-2">Artigos</a>
               <a href="/calculadoras" className="block nav-link py-2">Calculadoras</a>
-              <button className="btn-primary w-full">Login</button>
+              <Link to="/login" className="btn-primary w-full">Login</Link>
             </div>
           </div>
         )}
