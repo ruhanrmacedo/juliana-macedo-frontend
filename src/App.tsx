@@ -1,3 +1,4 @@
+import { AuthProvider } from "@/hooks/AuthContext"; // 👈 importar aqui
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import UserRegister from "./pages/UserRegister";
+import UserMetrics from "./pages/UserMetrics";
+import Perfil from "./pages/Perfil";
 
 const queryClient = new QueryClient();
 
@@ -15,14 +18,18 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<UserRegister />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider> {/* 👈 envolve aqui */}
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<UserRegister />} />
+            <Route path="/metrics" element={<UserMetrics />} />
+            <Route path="/perfil" element={<Perfil />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

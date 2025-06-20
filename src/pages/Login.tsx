@@ -3,6 +3,7 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import ReCAPTCHA from "react-google-recaptcha";
 import { toast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -10,6 +11,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const { setUser } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,12 +33,22 @@ const Login = () => {
         captchaToken,
       });
 
-      localStorage.setItem("token", response.data.token);
-      toast({
-        title: "Login realizado!",
-        description: `Bem-vindo, ${response.data.user.name}!`,
+      const token = response.data.token;
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(response.data.user));
+      setUser(response.data.user);
+
+      const check = await axios.get("http://localhost:3000/metrics/check", {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      navigate("/");
+
+      if (!check.data.hasMetrics) {
+        navigate("/metrics"); 
+      } else {
+        navigate("/"); 
+      }
+
     } catch (err: any) {
       const errorMsg = err.response?.data?.error || "Erro ao fazer login";
       setError(errorMsg);

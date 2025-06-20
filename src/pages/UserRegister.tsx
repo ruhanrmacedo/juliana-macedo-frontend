@@ -89,7 +89,7 @@ const UserRegister = () => {
         description: `Bem-vindo(a), ${response.data.user.name}`,
       });
 
-      navigate("/login");
+      navigate("/metrics");
     } catch (err) {
       toast({
         variant: "destructive",
