@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import ReCAPTCHA from "react-google-recaptcha";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import InputMask from "react-input-mask";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -12,6 +13,12 @@ const Login = () => {
   const navigate = useNavigate();
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const { setUser } = useAuth();
+  const [showRecoverEmail, setShowRecoverEmail] = useState(false);
+  const [cpf, setCpf] = useState("");
+  const [dataNascimento, setDataNascimento] = useState("");
+  const [emailRecuperado, setEmailRecuperado] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [emailRecuperacao, setEmailRecuperacao] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,9 +51,9 @@ const Login = () => {
       });
 
       if (!check.data.hasMetrics) {
-        navigate("/metrics"); 
+        navigate("/metrics");
       } else {
-        navigate("/"); 
+        navigate("/");
       }
 
     } catch (err: any) {
@@ -59,6 +66,90 @@ const Login = () => {
       });
     }
   };
+
+  const handleRecoverEmail = async () => {
+    if (!cpf || !dataNascimento) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha o CPF e a data de nascimento.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const parsedDate = new Date(dataNascimento);
+    if (isNaN(parsedDate.getTime())) {
+      toast({
+        title: "Data inválida",
+        description: "Informe uma data de nascimento válida.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const dataFormatada = parsedDate.toISOString().split("T")[0]; // garante "YYYY-MM-DD"
+
+    try {
+      const response = await axios.post("http://localhost:3000/auth/recover-email", {
+        cpf,
+        dataNascimento: dataFormatada,
+      });
+
+      setEmailRecuperado(response.data.email);
+      setCpf(""); // limpar campo
+      setDataNascimento(""); // limpar campo
+
+      toast({
+        title: "E-mail encontrado",
+        description: `E-mail: ${response.data.email}`,
+      });
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.error || "Erro ao recuperar e-mail";
+      toast({
+        title: "Erro",
+        description: errorMsg,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!emailRecuperacao) {
+      toast({
+        title: "E-mail obrigatório",
+        description: "Informe o e-mail para recuperar a senha.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const confirmar = window.confirm(
+      "Uma nova senha será gerada e enviada para o e-mail informado. Deseja continuar?"
+    );
+    if (!confirmar) return;
+
+    try {
+      await axios.post("http://localhost:3000/auth/forgot-password", {
+        email: emailRecuperacao,
+      });
+
+      toast({
+        title: "Senha redefinida",
+        description: "Uma nova senha foi enviada ao seu e-mail.",
+      });
+
+      setEmailRecuperacao("");
+      setShowForgotPassword(false);
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.error || "Erro ao recuperar senha";
+      toast({
+        title: "Erro",
+        description: errorMsg,
+        variant: "destructive",
+      });
+    }
+  };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-green-600 p-4">
@@ -106,9 +197,100 @@ const Login = () => {
           </button>
         </form>
 
+        {showRecoverEmail && (
+          <div className="mt-6 text-left border-t pt-4">
+            <h2 className="text-green-700 font-bold mb-2 text-center">Recuperar e-mail</h2>
+
+            <div className="mb-2">
+              <label className="text-sm block mb-1">CPF *</label>
+              <InputMask
+                mask="999.999.999-99"
+                value={cpf}
+                onChange={(e) => setCpf(e.target.value)}
+              >
+                {(inputProps: any) => (
+                  <input
+                    {...inputProps}
+                    type="text"
+                    className="w-full p-2 border rounded-md"
+                    placeholder="000.000.000-00"
+                  />
+                )}
+              </InputMask>
+            </div>
+
+            <div className="mb-4">
+              <label className="text-sm block mb-1">Data de nascimento *</label>
+              <input
+                type="date"
+                className="w-full p-2 border rounded-md"
+                value={dataNascimento}
+                onChange={(e) => setDataNascimento(e.target.value)}
+                max={new Date().toISOString().split("T")[0]} // impede datas futuras
+              />
+            </div>
+
+            <button
+              onClick={handleRecoverEmail}
+              className="w-full bg-blue-600 text-white p-2 rounded-md font-semibold"
+            >
+              Recuperar e-mail
+            </button>
+
+            {emailRecuperado && (
+              <p className="mt-2 text-green-700 font-medium text-center">
+                E-mail cadastrado: <strong>{emailRecuperado}</strong>
+              </p>
+            )}
+          </div>
+        )}
+
+        {showForgotPassword && (
+          <div className="mt-6 text-left border-t pt-4">
+            <h2 className="text-green-700 font-bold mb-2 text-center">Recuperar senha</h2>
+
+            <div className="mb-4">
+              <label className="text-sm block mb-1">E-mail cadastrado *</label>
+              <input
+                type="email"
+                className="w-full p-2 border rounded-md"
+                placeholder="Digite seu e-mail"
+                value={emailRecuperacao}
+                onChange={(e) => setEmailRecuperacao(e.target.value)}
+              />
+            </div>
+
+            <button
+              onClick={handleForgotPassword}
+              className="w-full bg-red-600 text-white p-2 rounded-md font-semibold"
+            >
+              Enviar nova senha
+            </button>
+          </div>
+        )}
+
         <div className="mt-4 space-y-2 text-sm text-green-800 font-medium">
-          <a href="#" className="block hover:underline text-center">Esqueci minha senha</a>
-          <a href="#" className="block hover:underline text-center">Esqueci meu e-mail</a>
+          <a
+            href="#"
+            onClick={() => {
+              setShowRecoverEmail(false);
+              setShowForgotPassword(true);
+            }}
+            className="block hover:underline text-center"
+          >
+            Esqueci minha senha
+          </a>
+
+          <a
+            href="#"
+            onClick={() => {
+              setShowForgotPassword(false);
+              setShowRecoverEmail(true);
+            }}
+            className="block hover:underline text-center"
+          >
+            Esqueci meu e-mail
+          </a>
         </div>
 
         <div className="mt-6">
