@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import ReCAPTCHA from "react-google-recaptcha";
 import { toast } from "@/components/ui/use-toast";
+import api from "@/lib/api";
 
 const UserRegister = () => {
   const [name, setName] = useState("");
@@ -69,7 +70,7 @@ const UserRegister = () => {
     const cleanedCpf = cpf.replace(/\D/g, "");
 
     try {
-      const response = await axios.post("http://localhost:3000/auth/register/full", {
+      const response = await api.post("http://localhost:3000/auth/register/full", {
         name,
         email,
         password,

@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Calculator as CalculatorIcon } from "lucide-react";
-import axios from "axios";
+import api from "@/lib/api";
 
 const CalculatorIMC = () => {
   const isAuthenticated = Boolean(localStorage.getItem("token"));
@@ -37,7 +37,7 @@ const CalculatorIMC = () => {
     } else {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:3000/metrics/imc", {
+        const response = await api.get("http://localhost:3000/metrics/imc", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setResult(response.data);

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 
 interface User {
   id: number;
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      const res = await axios.get("/auth/me", {
+      const res = await api.get("/auth/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUser(res.data);

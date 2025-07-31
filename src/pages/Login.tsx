@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 import { Link, useNavigate } from "react-router-dom";
 import ReCAPTCHA from "react-google-recaptcha";
 import { toast } from "@/components/ui/use-toast";
@@ -34,7 +34,7 @@ const Login = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:3000/auth/login", {
+      const response = await api.post("http://localhost:3000/auth/login", {
         email,
         password,
         captchaToken,
@@ -46,7 +46,7 @@ const Login = () => {
       localStorage.setItem("user", JSON.stringify(response.data.user));
       setUser(response.data.user);
 
-      const check = await axios.get("http://localhost:3000/metrics/check", {
+      const check = await api.get("http://localhost:3000/metrics/check", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -90,7 +90,7 @@ const Login = () => {
     const dataFormatada = parsedDate.toISOString().split("T")[0]; // garante "YYYY-MM-DD"
 
     try {
-      const response = await axios.post("http://localhost:3000/auth/recover-email", {
+      const response = await api.post("http://localhost:3000/auth/recover-email", {
         cpf,
         dataNascimento: dataFormatada,
       });
@@ -129,7 +129,7 @@ const Login = () => {
     if (!confirmar) return;
 
     try {
-      await axios.post("http://localhost:3000/auth/forgot-password", {
+      await api.post("http://localhost:3000/auth/forgot-password", {
         email: emailRecuperacao,
       });
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 
 interface Metrics {
   peso: number;
@@ -36,7 +36,7 @@ const UserMetrics = () => {
     const fetchMetrics = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:3000/metrics", {
+        const response = await api.get("http://localhost:3000/metrics", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (response.data && response.data.length > 0) {
@@ -81,7 +81,7 @@ const UserMetrics = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post("http://localhost:3000/metrics", payload, {
+      const response = await api.post("http://localhost:3000/metrics", payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMetrics(response.data);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 import { Droplets } from "lucide-react";
 
 const CalculatorWater = () => {
@@ -14,7 +14,7 @@ const CalculatorWater = () => {
   const fetchWaterIntake = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:3000/metrics/water", {
+      const response = await api.get("http://localhost:3000/metrics/water", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setResult(response.data);

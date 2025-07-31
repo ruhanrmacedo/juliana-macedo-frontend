@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 import { Flame } from "lucide-react";
 
 const CalculatorTDEE = () => {
@@ -10,7 +10,7 @@ const CalculatorTDEE = () => {
   const fetchTDEE = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:3000/metrics/tdee", {
+      const response = await api.get("http://localhost:3000/metrics/tdee", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setResult(response.data);

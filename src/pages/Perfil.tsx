@@ -1,19 +1,45 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import axios from "axios";
+import api from "@/lib/api";
+import { ModalEdit } from "@/components/ModalEdit";
+import { ModalAddress } from "@/components/ModalAddress";
 
 const Perfil = () => {
     const [user, setUser] = useState(null);
     const [metrics, setMetrics] = useState<any[] | null>(null);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [modalData, setModalData] = useState<{
+        label: string;
+        value: string;
+        endpoint: string;
+        fieldName: string;
+        method?: "put" | "patch" | "post";
+    }>({
+        label: "",
+        value: "",
+        endpoint: "",
+        fieldName: "",
+        method: "put", // valor default
+    });
+    const [modalAddressOpen, setModalAddressOpen] = useState(false);
+    const [modalAddressData, setModalAddressData] = useState<{
+        method: "post" | "put";
+        endpoint: string;
+        initialData?: any;
+    }>({
+        method: "post",
+        endpoint: "",
+        initialData: {},
+    });
 
     useEffect(() => {
         async function fetchData() {
             try {
-                const userRes = await axios.get("/auth/me");
+                const userRes = await api.get("/auth/me");
                 setUser(userRes.data);
 
-                const metricsRes = await axios.get("/metrics");
+                const metricsRes = await api.get("/metrics");
                 setMetrics(metricsRes.data);
             } catch (err) {
                 console.error(err);
@@ -22,7 +48,12 @@ const Perfil = () => {
         fetchData();
     }, []);
 
-    const lastMetric = metrics[0];
+    function openModal({ label, value, endpoint, fieldName, method = "put" }: any) {
+        setModalData({ label, value, endpoint, fieldName, method });
+        setModalOpen(true);
+    }
+
+    const lastMetric = Array.isArray(metrics) && metrics.length > 0 ? metrics[0] : null;
 
     return (
         <div className="max-w-4xl mx-auto p-4 space-y-8">
@@ -30,21 +61,157 @@ const Perfil = () => {
             <Card>
                 <CardContent className="space-y-2">
                     <h2 className="text-xl font-bold">🧍 Dados do Usuário</h2>
-                    <div>Nome: {user?.name}</div>
-                    <div>Email: {user?.email} <Button variant="ghost">✏️</Button></div>
+                    <div>
+                        Nome: {user?.name}
+                        <Button variant="ghost" onClick={() =>
+                            openModal({
+                                label: "Nome",
+                                value: user.name,
+                                endpoint: `/user`,
+                                fieldName: "name"
+                            })
+                        }>
+                            ✏️
+                        </Button>
+                    </div>
+                    <div>
+                        CPF: {user?.cpf}
+                        <Button variant="ghost" onClick={() =>
+                            openModal({
+                                label: "CPF",
+                                value: user.cpf,
+                                endpoint: `/user`,
+                                fieldName: "cpf"
+                            })
+                        }>
+                            ✏️
+                        </Button>
+                    </div>
 
                     <div>
-                        Telefones:
-                        {/* Mapear lista de telefones */}
-                        <div>(48) 99999-0000 <Button variant="ghost">✏️</Button></div>
-                        <Button variant="outline">+ Novo telefone</Button>
+                        Data de nascimento: {user?.dataNascimento && new Date(user.dataNascimento).toLocaleDateString()}
+                        <Button variant="ghost" onClick={() =>
+                            openModal({
+                                label: "Data de nascimento",
+                                value: user.dataNascimento,
+                                endpoint: `/user`,
+                                fieldName: "dataNascimento"
+                            })
+                        }>
+                            ✏️
+                        </Button>
+                    </div>
+                    <div>
+                        Email: {user?.email}
+                        <Button variant="ghost" onClick={() =>
+                            openModal({
+                                label: "Email",
+                                value: user.email,
+                                endpoint: `/user`, // endpoint que você criou no backend
+                                fieldName: "email"
+                            })
+                        }>
+                            ✏️
+                        </Button>
+                    </div>
+
+                    <div>
+                        Telefones: {user?.phones?.length || 0}
+                        {user?.phones?.map((phone: any, index: number) => (
+                            <div key={index} className="flex items-center justify-between">
+                                {phone.number}
+                                <Button variant="ghost" onClick={() =>
+                                    openModal({
+                                        label: "Telefone",
+                                        value: phone.number,
+                                        endpoint: `/phones/${phone.id}`,
+                                        fieldName: "number"
+                                    })
+                                }>
+                                    ✏️
+                                </Button>
+                            </div>
+                        ))}
+                        <Button
+                            variant="outline"
+                            onClick={() =>
+                                openModal({
+                                    label: "Novo Telefone",
+                                    value: "",
+                                    endpoint: "/phones", // endpoint para criação
+                                    fieldName: "number",
+                                    method: "post", // 👈 adiciona isso!
+                                })
+                            }
+                        >
+                            + Novo telefone
+                        </Button>
                     </div>
 
                     <div>
                         Endereços:
-                        {/* Mapear lista de endereços */}
-                        <div>Rua Exemplo, Centro, Truro <Button variant="ghost">✏️</Button></div>
-                        <Button variant="outline">+ Novo endereço</Button>
+                        {user?.addresses?.map((address: any, index: number) => (
+                            <div key={index} className="flex items-center justify-between">
+                                {`${address.street}, ${address.city}, ${address.state}`}
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => {
+                                        setModalAddressData({
+                                            method: "put",
+                                            endpoint: `/addresses/${address.id}`,
+                                            initialData: address,
+                                        });
+                                        setModalAddressOpen(true);
+                                    }}
+                                >
+                                    ✏️
+                                </Button>
+                            </div>
+                        ))}
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setModalAddressData({
+                                    method: "post",
+                                    endpoint: "/addresses",
+                                });
+                                setModalAddressOpen(true);
+                            }}
+                        >
+                            + Novo endereço
+                        </Button>
+                    </div>
+                    <div>
+                        E-mails alternativos:
+                        {user?.emails?.map((emailAlt: any, index: number) => (
+                            <div key={index}>
+                                {emailAlt.email}
+                                <Button variant="ghost" onClick={() =>
+                                    openModal({
+                                        label: "Email alternativo",
+                                        value: emailAlt.email,
+                                        endpoint: `/emails/${emailAlt.id}`,
+                                        fieldName: "email"
+                                    })
+                                }>
+                                    ✏️
+                                </Button>
+                            </div>
+                        ))}
+                        <Button
+                            variant="outline"
+                            onClick={() =>
+                                openModal({
+                                    label: "Novo e-mail alternativo",
+                                    value: "",
+                                    endpoint: "/emails",
+                                    fieldName: "email",
+                                    method: "post"
+                                })
+                            }
+                        >
+                            + Novo e-mail
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
@@ -96,6 +263,18 @@ const Perfil = () => {
                     </div>
                 </CardContent>
             </Card>
+            <ModalEdit
+                open={modalOpen}
+                onClose={() => setModalOpen(false)}
+                {...modalData}
+                onSuccess={() => window.location.reload()} // ou refetch dos dados
+            />
+            <ModalAddress
+                open={modalAddressOpen}
+                onClose={() => setModalAddressOpen(false)}
+                {...modalAddressData}
+                onSuccess={() => window.location.reload()}
+            />
         </div>
     );
 }

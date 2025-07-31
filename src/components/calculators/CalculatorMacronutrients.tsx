@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 import { ChefHat } from "lucide-react";
 
 const CalculatorMacronutrients = () => {
@@ -15,7 +15,7 @@ const CalculatorMacronutrients = () => {
   const fetchMacronutrients = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:3000/metrics/macronutrients", {
+      const response = await api.get("http://localhost:3000/metrics/macronutrients", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setResult(response.data);

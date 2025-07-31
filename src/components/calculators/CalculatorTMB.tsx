@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 import { Activity } from "lucide-react";
 
 const CalculatorTMB = () => {
@@ -10,7 +10,7 @@ const CalculatorTMB = () => {
   const fetchTMB = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:3000/metrics/tmb", {
+      const response = await api.get("http://localhost:3000/metrics/tmb", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setResult(response.data);
