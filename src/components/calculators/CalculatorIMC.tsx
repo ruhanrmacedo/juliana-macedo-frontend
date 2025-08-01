@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Calculator as CalculatorIcon } from "lucide-react";
 import api from "@/lib/api";
@@ -9,16 +8,18 @@ const CalculatorIMC = () => {
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
   const [result, setResult] = useState<{ imc: string; classificacao: string } | null>(null);
-  const [showInputs, setShowInputs] = useState(true);
+  const [showInputs, setShowInputs] = useState(!isAuthenticated);
 
   const calculateIMC = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!isAuthenticated) {
-      // cálculo no frontend
-      const heightInMeters = parseFloat(height) / 100;
-      const weightInKg = parseFloat(weight);
-      const bmi = weightInKg / (heightInMeters * heightInMeters);
+      const rawHeight = parseFloat(height.replace(",", "."));
+      const rawWeight = parseFloat(weight.replace(",", "."));
+
+      const heightInMeters = rawHeight < 3 ? rawHeight : rawHeight / 100;
+
+      const bmi = rawWeight / (heightInMeters * heightInMeters);
       const feedback =
         bmi < 18.5
           ? "Abaixo do peso"
@@ -49,8 +50,10 @@ const CalculatorIMC = () => {
   };
 
   const resetForm = () => {
-    setShowInputs(true);
+    setShowInputs(!isAuthenticated);
     setResult(null);
+    setHeight("");
+    setWeight("");
   };
 
   return (
@@ -60,12 +63,28 @@ const CalculatorIMC = () => {
         <h3 className="font-heading font-bold text-xl">Calculadora de IMC</h3>
       </div>
 
-      {showInputs ? (
+      {!showInputs ? (
+        result ? (
+          <div className="space-y-4 text-center">
+            <p className="text-lg font-semibold">
+              Seu IMC é: <span className="text-primary">{result.imc}</span>
+            </p>
+            <p className="text-gray-700 font-medium">{result.classificacao}</p>
+            <button onClick={resetForm} className="btn-primary w-full">
+              Usar novamente
+            </button>
+          </div>
+        ) : (
+          <button onClick={calculateIMC} className="btn-primary w-full">
+            Ver IMC
+          </button>
+        )
+      ) : (
         <form onSubmit={calculateIMC} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Altura (cm)</label>
             <input
-              type="number"
+              type="text"
               value={height}
               onChange={(e) => setHeight(e.target.value)}
               className="w-full p-2 border rounded-md"
@@ -75,7 +94,7 @@ const CalculatorIMC = () => {
           <div>
             <label className="block text-sm font-medium mb-1">Peso (kg)</label>
             <input
-              type="number"
+              type="text"
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
               className="w-full p-2 border rounded-md"
@@ -86,18 +105,9 @@ const CalculatorIMC = () => {
             Calcular IMC
           </button>
         </form>
-      ) : (
-        <div className="space-y-4 text-center">
-          <p className="text-lg font-semibold">Seu IMC é: <span className="text-primary">{result?.imc}</span></p>
-          <p className="text-gray-700 font-medium">{result?.classificacao}</p>
-          <button onClick={resetForm} className="btn-primary w-full">
-            Voltar
-          </button>
-        </div>
       )}
     </div>
   );
 };
 
 export default CalculatorIMC;
-
