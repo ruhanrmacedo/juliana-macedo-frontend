@@ -1,59 +1,114 @@
 import { useState } from "react";
 import { Calculator as CalculatorIcon } from "lucide-react";
 import api from "@/lib/api";
+import ConfirmUpdate from "@/components/ConfirmUpdate";
+import {
+  normalizePesoKg,
+  normalizeAlturaToMeters,
+  normalizeIdade,
+  Sexo,
+} from "@/lib/metrics";
+import { getErrorMessage } from "@/lib/errors";
+
+type ImcResult = { imc: string; classificacao: string };
+
+function classificarIMC(imc: number): string {
+  if (imc < 18.5) return "Abaixo do peso";
+  if (imc < 24.9) return "Peso normal";
+  if (imc < 29.9) return "Sobrepeso";
+  if (imc < 34.9) return "Obesidade grau 1";
+  if (imc < 39.9) return "Obesidade grau 2";
+  return "Obesidade grau 3";
+}
+
+const NIVEL_ATIVIDADE_DEFAULT = "Sedentário";
 
 const CalculatorIMC = () => {
   const isAuthenticated = Boolean(localStorage.getItem("token"));
 
-  const [height, setHeight] = useState("");
-  const [weight, setWeight] = useState("");
-  const [result, setResult] = useState<{ imc: string; classificacao: string } | null>(null);
-  const [showInputs, setShowInputs] = useState(!isAuthenticated);
+  // exibição
+  const [showForm, setShowForm] = useState(!isAuthenticated);
+  const [showResult, setShowResult] = useState(false);
 
-  const calculateIMC = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // form
+  const [altura, setAltura] = useState("");
+  const [peso, setPeso] = useState("");
+  const [idade, setIdade] = useState("");
+  const [sexo, setSexo] = useState<Sexo>("M");
 
-    if (!isAuthenticated) {
-      const rawHeight = parseFloat(height.replace(",", "."));
-      const rawWeight = parseFloat(weight.replace(",", "."));
+  // resultado
+  const [result, setResult] = useState<ImcResult | null>(null);
 
-      const heightInMeters = rawHeight < 3 ? rawHeight : rawHeight / 100;
+  // modal confirmar update
+  const [askUpdate, setAskUpdate] = useState(false);
 
-      const bmi = rawWeight / (heightInMeters * heightInMeters);
-      const feedback =
-        bmi < 18.5
-          ? "Abaixo do peso"
-          : bmi < 24.9
-            ? "Peso normal"
-            : bmi < 29.9
-              ? "Sobrepeso"
-              : bmi < 34.9
-                ? "Obesidade grau 1"
-                : bmi < 39.9
-                  ? "Obesidade grau 2"
-                  : "Obesidade grau 3";
+  // usa métricas salvas (backend)
+  const fetchIMCFromBackend = async () => {
+    try {
+      const { data } = await api.get("/metrics/imc");
+      setResult(data);
+      setShowResult(true);
+      setShowForm(false);
+    } catch (err) {
+      alert(getErrorMessage(err));
 
-      setResult({ imc: bmi.toFixed(1), classificacao: feedback });
-      setShowInputs(false);
-    } else {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await api.get("http://localhost:3000/metrics/imc", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setResult(response.data);
-        setShowInputs(false);
-      } catch (error: any) {
-        alert("Erro ao calcular IMC: " + error.response?.data?.error || error.message);
-      }
     }
   };
 
-  const resetForm = () => {
-    setShowInputs(!isAuthenticated);
+  const handlePrimaryClick = () => {
+    if (!isAuthenticated) {
+      setShowForm(true);
+      setShowResult(false);
+      return;
+    }
+    fetchIMCFromBackend();
+  };
+
+  const onUsarNovamente = () => {
+    setShowForm(true);
+    setShowResult(false);
+  };
+
+  const onCalcular = () => {
+    try {
+      const pesoKg = normalizePesoKg(peso);
+      const alturaM = normalizeAlturaToMeters(altura);
+
+      const imc = pesoKg / (alturaM * alturaM);
+      setResult({ imc: imc.toFixed(1), classificacao: classificarIMC(imc) });
+      setShowResult(true);
+      setShowForm(false);
+
+      if (isAuthenticated) setAskUpdate(true);
+    } catch (err) {
+      alert(getErrorMessage(err));
+    }
+  };
+
+  const onConfirmUpdate = async () => {
+    setAskUpdate(false);
+    try {
+      await api.post("/metrics", {
+        peso: normalizePesoKg(peso),
+        altura: normalizeAlturaToMeters(altura),
+        idade: normalizeIdade(idade), // usado no 1º cadastro
+        sexo,                        // usado no 1º cadastro
+        nivelAtividade: NIVEL_ATIVIDADE_DEFAULT, // exigido no 1º cadastro
+        gorduraCorporal: null,
+      });
+    } catch (err) {
+      alert(getErrorMessage(err));
+    }
+  };
+
+  const reset = () => {
     setResult(null);
-    setHeight("");
-    setWeight("");
+    setShowResult(false);
+    setShowForm(!isAuthenticated);
+    setAltura("");
+    setPeso("");
+    setIdade("");
+    setSexo("M");
   };
 
   return (
@@ -63,49 +118,113 @@ const CalculatorIMC = () => {
         <h3 className="font-heading font-bold text-xl">Calculadora de IMC</h3>
       </div>
 
-      {!showInputs ? (
-        result ? (
-          <div className="space-y-4 text-center">
-            <p className="text-lg font-semibold">
-              Seu IMC é: <span className="text-primary">{result.imc}</span>
-            </p>
-            <p className="text-gray-700 font-medium">{result.classificacao}</p>
-            <button onClick={resetForm} className="btn-primary w-full">
-              Usar novamente
+      {/* estado inicial */}
+      {!showForm && !showResult && (
+        <button onClick={handlePrimaryClick} className="btn-primary w-full">
+          Ver IMC
+        </button>
+      )}
+
+      {/* formulário */}
+      {showForm && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onCalcular();
+          }}
+          className="space-y-4"
+        >
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">Altura (m ou cm)</label>
+              <input
+                type="number"
+                step="any"
+                inputMode="decimal"
+                value={altura}
+                onChange={(e) => setAltura(e.target.value)}
+                className="w-full p-2 border rounded-md"
+                placeholder="Ex.: 1,75 ou 175"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Peso (kg)</label>
+              <input
+                type="number"
+                step="any"
+                inputMode="decimal"
+                value={peso}
+                onChange={(e) => setPeso(e.target.value)}
+                className="w-full p-2 border rounded-md"
+                placeholder="Ex.: 72,5"
+              />
+            </div>
+          </div>
+
+          {/* Campos usados apenas para salvar no 1º cadastro */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm mb-1">Idade (anos)</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={idade}
+                onChange={(e) => setIdade(e.target.value)}
+                className="w-full p-2 border rounded-md"
+                placeholder="Ex.: 34"
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-1">Sexo</label>
+              <select
+                value={sexo}
+                onChange={(e) => setSexo(e.target.value as Sexo)}
+                className="w-full p-2 border rounded-md"
+              >
+                <option value="M">Masculino</option>
+                <option value="F">Feminino</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button type="submit" className="btn-primary w-full">
+              Calcular IMC
+            </button>
+            <button
+              onClick={() => {
+                setShowForm(false);
+                setShowResult(false);
+              }}
+              className="flex-1 border rounded-md"
+            >
+              Cancelar
             </button>
           </div>
-        ) : (
-          <button onClick={calculateIMC} className="btn-primary w-full">
-            Ver IMC
-          </button>
-        )
-      ) : (
-        <form onSubmit={calculateIMC} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Altura (cm)</label>
-            <input
-              type="text"
-              value={height}
-              onChange={(e) => setHeight(e.target.value)}
-              className="w-full p-2 border rounded-md"
-              placeholder="Sua altura aqui"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Peso (kg)</label>
-            <input
-              type="text"
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-              className="w-full p-2 border rounded-md"
-              placeholder="Seu peso aqui"
-            />
-          </div>
-          <button type="submit" className="btn-primary w-full">
-            Calcular IMC
-          </button>
         </form>
       )}
+
+      {/* resultado */}
+      {showResult && !showForm && result && (
+        <div className="space-y-4 text-center">
+          <p className="text-lg font-semibold">
+            Seu IMC é: <span className="text-primary">{result.imc}</span>
+          </p>
+          <p className="text-gray-700 font-medium">{result.classificacao}</p>
+          <button onClick={onUsarNovamente} className="btn-primary w-full">
+            Usar novamente
+          </button>
+        </div>
+      )}
+
+      <ConfirmUpdate
+        open={askUpdate}
+        onCancel={() => setAskUpdate(false)}
+        onConfirm={onConfirmUpdate}
+      />
+
+      {/* reset opcional (não aparece por padrão aqui) */}
+      {/* <button onClick={reset}>Reset</button> */}
     </div>
   );
 };

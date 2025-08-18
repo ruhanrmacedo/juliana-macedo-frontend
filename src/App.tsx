@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import UserRegister from "./pages/UserRegister";
 import UserMetrics from "./pages/UserMetrics";
 import Perfil from "./pages/Perfil";
+import PostDetail from "./pages/PostDetail";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/register" element={<UserRegister />} />
             <Route path="/metrics" element={<UserMetrics />} />
             <Route path="/perfil" element={<Perfil />} />
+            <Route path="/posts/:id" element={<PostDetail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

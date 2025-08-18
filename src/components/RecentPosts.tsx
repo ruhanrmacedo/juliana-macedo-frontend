@@ -1,34 +1,35 @@
-
+import { useEffect, useState } from "react";
 import PostCard from "./PostCard";
+import api from "@/lib/api";
+import { useNavigate } from "react-router-dom";
+import { getPaginatedPosts } from "@/lib/posts";
 
-const posts = [
-  {
-    id: 1,
-    title: "10 Benefícios da Alimentação Vegetariana",
-    excerpt: "Descubra como uma dieta baseada em plantas pode melhorar sua saúde e bem-estar.",
-    image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800",
-    likes: 156,
-    comments: 23,
-  },
-  {
-    id: 2,
-    title: "Guia Completo de Proteínas Vegetais",
-    excerpt: "Aprenda sobre as melhores fontes de proteína para uma dieta vegetariana equilibrada.",
-    image: "https://images.unsplash.com/photo-1547592180-85f173990554?w=800",
-    likes: 142,
-    comments: 18,
-  },
-  {
-    id: 3,
-    title: "Receitas Saudáveis para o Café da Manhã",
-    excerpt: "Comece seu dia com estas deliciosas e nutritivas opções de café da manhã.",
-    image: "https://images.unsplash.com/photo-1494859802809-d069c3b71a8a?w=800",
-    likes: 198,
-    comments: 34,
-  },
-];
+interface Post {
+  id: number;
+  title: string;
+  excerpt: string;
+  imageUrl?: string;
+  likes: number;
+  commentsCount: number;
+}
 
 const RecentPosts = () => {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const data = await getPaginatedPosts(1, 6);
+        setPosts(data.posts);
+      } catch (err) {
+        console.error("Erro ao carregar posts:", err);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
   return (
     <section className="py-16 bg-surface-secondary">
       <div className="container mx-auto px-4">
@@ -37,7 +38,16 @@ const RecentPosts = () => {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-1 gap-8">
           {posts.map((post) => (
-            <PostCard key={post.id} {...post} />
+            <PostCard
+              key={post.id}
+              id={post.id}
+              title={post.title}
+              excerpt={post.excerpt}
+              image={post.imageUrl ?? "https://placehold.co/800x400?text=Sem+Imagem"}
+              likes={post.likes}
+              comments={post.commentsCount}
+              onReadMore={() => navigate(`/posts/${post.id}`)}
+            />
           ))}
         </div>
       </div>
@@ -46,4 +56,3 @@ const RecentPosts = () => {
 };
 
 export default RecentPosts;
-

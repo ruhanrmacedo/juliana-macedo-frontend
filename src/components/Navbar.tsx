@@ -3,15 +3,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import NewPostModal from "@/components/NewPostModal";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout, isAuthenticated, loading } = useAuth();
-
-  console.log("Navbar user:", user);
-
-
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showNewPost, setShowNewPost] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -35,6 +33,16 @@ const Navbar = () => {
             <a href="/receitas" className="nav-link">Receitas</a>
             <a href="/artigos" className="nav-link">Artigos</a>
             <a href="/calculadoras" className="nav-link">Calculadoras</a>
+
+            {/* Botão Novo Post - só admin */}
+            {!loading && isAuthenticated && user?.role === "admin" && (
+              <button
+                onClick={() => setShowNewPost(true)}
+                className="px-3 py-1.5 rounded-md bg-primary text-white hover:opacity-90 transition"
+              >
+                Novo Post
+              </button>
+            )}
 
             {loading ? null : (
               isAuthenticated && user?.name ? (
@@ -71,6 +79,17 @@ const Navbar = () => {
               <a href="/receitas" className="block nav-link py-2">Receitas</a>
               <a href="/artigos" className="block nav-link py-2">Artigos</a>
               <a href="/calculadoras" className="block nav-link py-2">Calculadoras</a>
+
+              {/* Novo Post no mobile */}
+              {isAuthenticated && user?.role === "admin" && (
+                <button
+                  onClick={() => { setIsMenuOpen(false); setShowNewPost(true); }}
+                  className="w-full text-left nav-link py-2 hover:bg-gray-100"
+                >
+                  Novo Post
+                </button>
+              )}
+
               {isAuthenticated && <a href="/perfil" className="block nav-link py-2">Perfil</a>}
               {!isAuthenticated ? (
                 <Link to="/login" className="btn-primary w-full">Login</Link>
@@ -81,9 +100,13 @@ const Navbar = () => {
           </div>
         )}
       </div>
-    </nav >
+
+      {/* Modal Novo Post */}
+      {showNewPost && (
+        <NewPostModal open={showNewPost} onClose={() => setShowNewPost(false)} />
+      )}
+    </nav>
   );
 };
 
 export default Navbar;
-

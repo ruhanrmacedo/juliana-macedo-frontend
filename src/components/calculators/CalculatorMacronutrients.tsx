@@ -1,41 +1,136 @@
+// src/components/CalculatorMacronutrients.tsx
 import { useState } from "react";
 import api from "@/lib/api";
 import { ChefHat } from "lucide-react";
+import ConfirmUpdate from "@/components/ConfirmUpdate";
+import {
+  calcularTDEE,
+  parseNumberBR,
+  NivelAtividadeFE,
+  Sexo,
+  nivelToBackendValue,
+  normalizePesoKg,
+  normalizeAlturaToMeters,
+  normalizeIdade,
+} from "@/lib/metrics";
+import { getErrorMessage } from "@/lib/errors";
+
+const NIVEL_OPTIONS: NivelAtividadeFE[] = [
+  "Sedentário",
+  "Levemente Ativo",
+  "Moderadamente Ativo",
+  "Altamente Ativo",
+  "Atleta",
+];
+
+type MacrosResult = {
+  proteinas: string;
+  carboidratos: string;
+  gorduras: string;
+  mensagem: string;
+};
+
+function calcularMacrosLocal(tdee: number): MacrosResult {
+  const proteinasG = (tdee * 0.3) / 4; // 30%
+  const carboG = (tdee * 0.5) / 4;     // 50%
+  const gordurasG = (tdee * 0.2) / 9;  // 20%
+  return {
+    proteinas: `${proteinasG.toFixed(1)}g`,
+    carboidratos: `${carboG.toFixed(1)}g`,
+    gorduras: `${gordurasG.toFixed(1)}g`,
+    mensagem:
+      "Distribuição sugerida com base em 30% proteínas, 50% carboidratos e 20% gorduras.",
+  };
+}
 
 const CalculatorMacronutrients = () => {
   const isAuthenticated = Boolean(localStorage.getItem("token"));
-  const [result, setResult] = useState<{
-    proteinas: string;
-    carboidratos: string;
-    gorduras: string;
-    mensagem: string;
-  } | null>(null);
+
+  // exibição
+  const [showForm, setShowForm] = useState(false);
   const [showResult, setShowResult] = useState(false);
 
-  const fetchMacronutrients = async () => {
+  // form
+  const [peso, setPeso] = useState("");
+  const [altura, setAltura] = useState(""); // cm ou m
+  const [idade, setIdade] = useState("");
+  const [sexo, setSexo] = useState<Sexo>("M");
+  const [nivel, setNivel] = useState<NivelAtividadeFE>("Moderadamente Ativo");
+
+  // resultado
+  const [result, setResult] = useState<MacrosResult | null>(null);
+
+  // modal confirmar update
+  const [askUpdate, setAskUpdate] = useState(false);
+
+  // Usa métricas salvas (backend)
+  const fetchFromBackend = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await api.get("http://localhost:3000/metrics/macronutrients", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setResult(response.data);
+      const res = await api.get("/metrics/macronutrients");
+      setResult(res.data);
       setShowResult(true);
-    } catch (error: any) {
-      alert("Erro ao calcular macronutrientes: " + error.response?.data?.error || error.message);
+      setShowForm(false);
+    } catch (err) {
+      alert(getErrorMessage(err));
     }
   };
 
-  const handleClick = () => {
-    if (isAuthenticated) {
-      fetchMacronutrients();
-    } else {
+  // Primeira ação (igual TDEE)
+  const handlePrimaryClick = () => {
+    if (!isAuthenticated) {
       alert("Você precisa estar logado para ver seus macronutrientes.");
+      return;
+    }
+    fetchFromBackend();
+  };
+
+  const onUsarNovamente = () => {
+    setShowForm(true);
+    setShowResult(false);
+  };
+
+  const onCalcular = () => {
+    try {
+      // normaliza igual ao backend (lança erro se fora do plausível)
+      const pesoKg = normalizePesoKg(peso);                 // número em kg
+      const alturaM = normalizeAlturaToMeters(altura);      // número em metros
+      const idadeNum = normalizeIdade(idade);               // inteiro
+
+      // calcularTDEE espera altura em CM
+      const tdee = calcularTDEE({
+        pesoKg,
+        alturaCm: alturaM * 100,
+        idade: idadeNum,
+        sexo,
+        nivel,
+      });
+
+      const macros = calcularMacrosLocal(tdee);
+      setResult(macros);
+      setShowResult(true);
+      setShowForm(false);
+
+      if (isAuthenticated) setAskUpdate(true);
+    } catch (err) {
+      alert(getErrorMessage(err));
     }
   };
 
-  const reset = () => {
-    setResult(null);
-    setShowResult(false);
+  const onConfirmUpdate = async () => {
+    setAskUpdate(false);
+    try {
+      await api.post("/metrics", {
+        peso: normalizePesoKg(peso),
+        altura: normalizeAlturaToMeters(altura),
+        idade: normalizeIdade(idade),
+        sexo,
+        nivelAtividade: nivelToBackendValue[nivel],
+        gorduraCorporal: null,
+      });
+      // não precisa recarregar nada aqui
+    } catch (err) {
+      alert(getErrorMessage(err));
+    }
   };
 
   return (
@@ -45,27 +140,122 @@ const CalculatorMacronutrients = () => {
         <h3 className="font-heading font-bold text-xl">Calculadora de Macronutrientes</h3>
       </div>
 
-      {!showResult ? (
-        <button onClick={handleClick} className="btn-primary w-full">
+      {/* estado inicial */}
+      {!showForm && !showResult && (
+        <button onClick={handlePrimaryClick} className="btn-primary w-full">
           Ver Macronutrientes
         </button>
-      ) : (
-        <div className="text-center space-y-2">
-          <p>
-            Proteínas: <span className="text-primary font-semibold">{result?.proteinas}</span>
-          </p>
-          <p>
-            Carboidratos: <span className="text-primary font-semibold">{result?.carboidratos}</span>
-          </p>
-          <p>
-            Gorduras: <span className="text-primary font-semibold">{result?.gorduras}</span>
-          </p>
-          <p className="text-sm text-gray-600">{result?.mensagem}</p>
-          <button onClick={reset} className="btn-primary w-full mt-4">
-            Usar novamente
-          </button>
+      )}
+
+      {/* formulário */}
+      {showForm && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm mb-1">Peso (kg)</label>
+              <input
+                value={peso}
+                onChange={(e) => setPeso(e.target.value)}
+                className="w-full p-2 border rounded-md"
+                placeholder="Ex.: 72,5"
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-1">Altura (m ou cm)</label>
+              <input
+                value={altura}
+                onChange={(e) => setAltura(e.target.value)}
+                className="w-full p-2 border rounded-md"
+                placeholder="1,75 ou 175"
+                type="number"
+                step="any"
+                inputMode="decimal"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm mb-1">Idade (anos)</label>
+              <input
+                value={idade}
+                onChange={(e) => setIdade(e.target.value)}
+                className="w-full p-2 border rounded-md"
+                placeholder="Ex.: 34"
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-1">Sexo</label>
+              <select
+                value={sexo}
+                onChange={(e) => setSexo(e.target.value as Sexo)}
+                className="w-full p-2 border rounded-md"
+              >
+                <option value="M">Masculino</option>
+                <option value="F">Feminino</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm mb-1">Nível de atividade</label>
+            <select
+              value={nivel}
+              onChange={(e) => setNivel(e.target.value as NivelAtividadeFE)}
+              className="w-full p-2 border rounded-md"
+            >
+              {NIVEL_OPTIONS.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex gap-2">
+            <button onClick={onCalcular} className="btn-primary flex-1">
+              Calcular
+            </button>
+            <button
+              onClick={() => {
+                setShowForm(false);
+                setShowResult(false);
+              }}
+              className="flex-1 border rounded-md"
+            >
+              Cancelar
+            </button>
+          </div>
         </div>
       )}
+
+      {/* resultado */}
+      {showResult && !showForm && result && (
+        <div className="text-center space-y-2">
+          <p>
+            Proteínas: <span className="text-primary font-semibold">{result.proteinas}</span>
+          </p>
+          <p>
+            Carboidratos: <span className="text-primary font-semibold">{result.carboidratos}</span>
+          </p>
+          <p>
+            Gorduras: <span className="text-primary font-semibold">{result.gorduras}</span>
+          </p>
+          <p className="text-sm text-gray-600">{result.mensagem}</p>
+          <div className="mt-4 flex gap-2">
+            <button onClick={onUsarNovamente} className="btn-primary w-full">
+              Usar novamente
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* modal confirmar update (salvar métricas novas) */}
+      <ConfirmUpdate
+        open={askUpdate}
+        onCancel={() => setAskUpdate(false)}
+        onConfirm={onConfirmUpdate}
+      />
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import api from "@/lib/api";
+import { nivelFromBackend } from "@/lib/metrics";
 
 interface ModalEditMetricsProps {
     open: boolean;
@@ -19,15 +20,8 @@ interface ModalEditMetricsProps {
     onSuccess?: () => void;
 }
 
-function mapNivelAtividadeBackend(label: string): string {
-    const map: Record<string, string> = {
-        "SEDENTARIO": "Sedentário",
-        "LEVEMENTE_ATIVO": "Levemente Ativo",
-        "MODERADAMENTE_ATIVO": "Moderadamente Ativo",
-        "ALTAMENTE_ATIVO": "Altamente Ativo",
-        "ATLETA": "Atleta / Muito Ativo"
-    };
-    return map[label] || label;
+function backendToLabel(code?: string) {
+    return code ? (nivelFromBackend[code] ?? code) : "Sedentário";
 }
 
 export function ModalEditMetrics({ open, onClose, initialData, onSuccess }: ModalEditMetricsProps) {
@@ -35,7 +29,9 @@ export function ModalEditMetrics({ open, onClose, initialData, onSuccess }: Moda
     const [altura, setAltura] = useState(initialData.altura?.toString() || "");
     const [idade, setIdade] = useState(initialData.idade?.toString() || "");
     const [sexo, setSexo] = useState(initialData.sexo || "M");
-    const [nivelAtividade, setNivelAtividade] = useState(mapNivelAtividadeBackend(initialData.nivelAtividade) || "SEDENTARIO");
+    const [nivelAtividade, setNivelAtividade] = useState(
+        initialData.nivelAtividade || "Sedentário"
+    );
     const [gorduraCorporal, setGorduraCorporal] = useState(initialData.gorduraCorporal?.toString() || "");
     const [loading, setLoading] = useState(false);
 
@@ -47,11 +43,11 @@ export function ModalEditMetrics({ open, onClose, initialData, onSuccess }: Moda
                 altura: altura.replace(",", "."),
                 idade: parseInt(idade),
                 sexo,
-                nivelAtividade: mapNivelAtividadeBackend(nivelAtividade),
+                nivelAtividade,
                 gorduraCorporal: gorduraCorporal ? gorduraCorporal.replace(",", ".") : undefined
             });
             onClose();
-            if (onSuccess) onSuccess();
+            onSuccess?.();
         } catch (err) {
             console.error("Erro ao salvar métricas:", err);
         } finally {
@@ -106,17 +102,13 @@ export function ModalEditMetrics({ open, onClose, initialData, onSuccess }: Moda
                     <label className="flex flex-col gap-1">
                         Nível de Atividade
                         <Select value={nivelAtividade} onValueChange={setNivelAtividade}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Nível de Atividade">
-                                {mapNivelAtividadeBackend(nivelAtividade)}
-                                </SelectValue>
-                            </SelectTrigger>
+                            <SelectTrigger><SelectValue placeholder="Nível de Atividade" /></SelectTrigger>
                             <SelectContent className="z-50 max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-md shadow-md">
-                                <SelectItem value="SEDENTARIO">Sedentário</SelectItem>
-                                <SelectItem value="LEVEMENTE_ATIVO">Levemente Ativo</SelectItem>
-                                <SelectItem value="MODERADAMENTE_ATIVO">Moderadamente Ativo</SelectItem>
-                                <SelectItem value="ALTAMENTE_ATIVO">Altamente Ativo</SelectItem>
-                                <SelectItem value="ATLETA">Atleta</SelectItem>
+                                <SelectItem value="Sedentário">Sedentário</SelectItem>
+                                <SelectItem value="Levemente Ativo">Levemente Ativo</SelectItem>
+                                <SelectItem value="Moderadamente Ativo">Moderadamente Ativo</SelectItem>
+                                <SelectItem value="Altamente Ativo">Altamente Ativo</SelectItem>
+                                <SelectItem value="Atleta / Muito Ativo">Atleta / Muito Ativo</SelectItem>
                             </SelectContent>
                         </Select>
                     </label>
@@ -130,12 +122,8 @@ export function ModalEditMetrics({ open, onClose, initialData, onSuccess }: Moda
                     </label>
                 </div>
                 <DialogFooter className="mt-4">
-                    <Button variant="outline" onClick={onClose}>
-                        Cancelar
-                    </Button>
-                    <Button onClick={handleSave} disabled={loading}>
-                        Salvar
-                    </Button>
+                    <Button variant="outline" onClick={onClose}>Cancelar</Button>
+                    <Button onClick={handleSave} disabled={loading}>Salvar</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

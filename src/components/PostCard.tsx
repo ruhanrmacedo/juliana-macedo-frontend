@@ -2,14 +2,16 @@
 import { Heart, MessageSquare } from "lucide-react";
 
 interface PostCardProps {
+  id: number;
   image: string;
   title: string;
   excerpt: string;
   likes: number;
   comments: number;
+  onReadMore?: () => void;
 }
 
-const PostCard = ({ image, title, excerpt, likes, comments }: PostCardProps) => {
+const PostCard = ({ image, title, excerpt, likes, comments, onReadMore }: PostCardProps) => {
   return (
     <div className="card overflow-hidden group">
       <div className="relative overflow-hidden aspect-video">
@@ -33,7 +35,9 @@ const PostCard = ({ image, title, excerpt, likes, comments }: PostCardProps) => 
               <span>{comments}</span>
             </span>
           </div>
-          <button className="btn-primary">Ler mais</button>
+          <button className="btn-primary" onClick={onReadMore}>
+            Ler mais
+          </button>
         </div>
       </div>
     </div>

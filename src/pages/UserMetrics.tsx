@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
+import { nivelToBackendValue } from "@/lib/metrics";
+import {
+  normalizeAlturaToMeters,
+  normalizePesoKg,
+  normalizeIdade,
+  normalizeGordura,
+} from "@/lib/metrics";
 
 interface Metrics {
   peso: number;
@@ -36,9 +43,7 @@ const UserMetrics = () => {
     const fetchMetrics = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await api.get("http://localhost:3000/metrics", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await api.get("/metrics")
         if (response.data && response.data.length > 0) {
           const data = response.data[0];
           setMetrics(data);
@@ -69,21 +74,16 @@ const UserMetrics = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = {
-      peso: parseFloat(formData.peso.replace(",", ".")),
-      altura: parseFloat(formData.altura.replace(",", ".")),
-      idade: parseInt(formData.idade),
+      peso: normalizePesoKg(formData.peso),
+      altura: normalizeAlturaToMeters(formData.altura), // <- sempre metros
+      idade: normalizeIdade(formData.idade),
       sexo: formData.sexo,
-      nivelAtividade: formData.nivelAtividade,
-      gorduraCorporal: formData.gorduraCorporal
-        ? parseFloat(formData.gorduraCorporal.replace(",", "."))
-        : undefined,
+      nivelAtividade: formData.nivelAtividade, // já está no valor do backend
+      gorduraCorporal: normalizeGordura(formData.gorduraCorporal),
     };
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await api.post("http://localhost:3000/metrics", payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.post("/metrics", payload);
       setMetrics(response.data);
       setEditing(false);
     } catch (error) {
@@ -135,12 +135,18 @@ const UserMetrics = () => {
             </div>
             <div>
               <label htmlFor="nivelAtividade" className="block text-sm font-medium mb-1">Nível de Atividade</label>
-              <select id="nivelAtividade" name="nivelAtividade" value={formData.nivelAtividade} onChange={handleChange} className="w-full p-2 border rounded-md">
+              <select
+                id="nivelAtividade"
+                name="nivelAtividade"
+                value={formData.nivelAtividade}
+                onChange={handleChange}
+                className="w-full p-2 border rounded-md"
+              >
                 <option value="">Selecione</option>
                 <option value="Sedentário">Sedentário</option>
-                <option value="Levemente Ativo">Levemente ativo</option>
-                <option value="Moderadamente Ativo">Moderadamente ativo</option>
-                <option value="Altamente Ativo">Altamente ativo</option>
+                <option value="Levemente Ativo">Levemente Ativo</option>
+                <option value="Moderadamente Ativo">Moderadamente Ativo</option>
+                <option value="Altamente Ativo">Altamente Ativo</option>
                 <option value="Atleta / Muito Ativo">Atleta / Muito Ativo</option>
               </select>
             </div>

@@ -1,50 +1,52 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import api from "@/lib/api";
+import { useNavigate } from "react-router-dom";
+import { getTopViewedPosts } from "@/lib/posts";
 
-const posts = [
-  {
-    id: 1,
-    title: "Alimentação Saudável: Um Guia Completo",
-    excerpt: "Descubra como montar um prato equilibrado e nutritivo para sua rotina diária.",
-    image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1200",
-    likes: 245,
-    comments: 42,
-  },
-  {
-    id: 2,
-    title: "Receitas Práticas para o Dia a Dia",
-    excerpt: "Aprenda receitas rápidas e saudáveis para uma rotina movimentada.",
-    image: "https://images.unsplash.com/photo-1547592180-85f173990554?w=1200",
-    likes: 189,
-    comments: 35,
-  },
-];
+interface Post {
+  id: number;
+  title: string;
+  excerpt: string;
+  imageUrl?: string;
+}
 
 const HeroCarousel = () => {
+  const [posts, setPosts] = useState<Post[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const navigate = useNavigate();
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % posts.length);
-  };
+  useEffect(() => {
+    const fetchTopPosts = async () => {
+      try {
+        const data = await getTopViewedPosts(3);
+        setPosts(data.posts);
+      } catch (err) {
+        console.error("Erro ao buscar destaques", err);
+      }
+    };
 
-  const prevSlide = () => {
+    fetchTopPosts();
+  }, []);
+
+  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % posts.length);
+  const prevSlide = () =>
     setCurrentSlide((prev) => (prev - 1 + posts.length) % posts.length);
-  };
+
+  if (posts.length === 0) return null;
 
   return (
-    <div className="relative h-[600px] overflow-hidden bg-surface-secondary">
+    <div className="relative h-[400px] overflow-hidden bg-surface-secondary">
       <div
         className="h-full transition-transform duration-500 ease-out flex"
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
       >
         {posts.map((post) => (
-          <div
-            key={post.id}
-            className="w-full h-full flex-shrink-0 relative"
-          >
+          <div key={post.id} className="w-full h-full flex-shrink-0 relative">
             <img
-              src={post.image}
+              src={
+                post.imageUrl ?? "https://placehold.co/1200x400?text=Sem+Imagem"
+              }
               alt={post.title}
               className="w-full h-full object-cover"
             />
@@ -57,7 +59,12 @@ const HeroCarousel = () => {
                 <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
                   {post.excerpt}
                 </p>
-                <button className="btn-primary">Ler mais</button>
+                <button
+                  className="btn-primary"
+                  onClick={() => navigate(`/posts/${post.id}`)}
+                >
+                  Ler mais
+                </button>
               </div>
             </div>
           </div>
@@ -81,4 +88,3 @@ const HeroCarousel = () => {
 };
 
 export default HeroCarousel;
-
