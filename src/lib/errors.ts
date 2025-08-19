@@ -15,3 +15,10 @@ export function getErrorMessage(err: unknown): string {
     if (err instanceof Error) return err.message;
     return "Erro desconhecido.";
 }
+
+export function getStatus(err: unknown): number | undefined {
+    if (axios.isAxiosError(err)) {
+        return err.response?.status;
+    }
+    return undefined;
+}

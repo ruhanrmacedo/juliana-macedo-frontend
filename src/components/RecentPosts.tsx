@@ -11,6 +11,7 @@ interface Post {
   imageUrl?: string;
   likes: number;
   commentsCount: number;
+  views: number;
 }
 
 const RecentPosts = () => {
@@ -46,6 +47,7 @@ const RecentPosts = () => {
               image={post.imageUrl ?? "https://placehold.co/800x400?text=Sem+Imagem"}
               likes={post.likes}
               comments={post.commentsCount}
+              views={post.views}
               onReadMore={() => navigate(`/posts/${post.id}`)}
             />
           ))}

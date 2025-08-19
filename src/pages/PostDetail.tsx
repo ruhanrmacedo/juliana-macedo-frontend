@@ -6,6 +6,8 @@ import CommentSection from "@/components/CommentSection";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Eye } from "lucide-react";
+import LikeButton from "@/components/LikeButton";
+import { getErrorMessage } from "@/lib/errors";
 
 interface Post {
     id: number;
@@ -33,10 +35,10 @@ const PostDetail = () => {
                 const res = await api.get(`/post/${parsedId}`);
                 setPost(res.data);
                 document.title = `${res.data.title} — Vida & Sabor`;
-            } catch {
+            } catch (err: unknown) {
                 toast({
                     title: "Erro ao carregar post",
-                    description: "Tente novamente mais tarde.",
+                    description: getErrorMessage(err),
                     variant: "destructive",
                 });
             } finally {
@@ -83,6 +85,7 @@ const PostDetail = () => {
                                 <span className="inline-flex items-center gap-1">
                                     • <Eye size={16} /> {post.views} visualizações
                                 </span>
+                                <LikeButton postId={post.id} />
                             </div>
                         </header>
 
