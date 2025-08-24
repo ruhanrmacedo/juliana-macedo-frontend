@@ -5,12 +5,10 @@ import { useNavigate } from "react-router-dom";
 const POST_TYPES = [
     "Receita",
     "Saúde",
-    "Estudo",
-    "Bem-estar",
+    "Artigo",
     "Alimentação",
     "Dicas",
     "Novidades",
-    "Suplementação",
 ] as const;
 
 export default function NewPostModal({ open, onClose }: { open: boolean; onClose: () => void }) {

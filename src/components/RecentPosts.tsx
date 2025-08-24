@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import PostCard from "./PostCard";
 import api from "@/lib/api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { getPaginatedPosts } from "@/lib/posts";
 
 interface Post {
@@ -17,11 +17,13 @@ interface Post {
 const RecentPosts = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const type = params.get("type") || undefined;
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const data = await getPaginatedPosts(1, 6);
+        const data = await getPaginatedPosts(1, 6, type);
         setPosts(data.posts);
       } catch (err) {
         console.error("Erro ao carregar posts:", err);
@@ -29,7 +31,7 @@ const RecentPosts = () => {
     };
 
     fetchPosts();
-  }, []);
+  }, [type]);
 
   return (
     <section className="py-16 bg-surface-secondary">

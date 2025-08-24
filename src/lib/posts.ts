@@ -1,14 +1,11 @@
 import api from "@/lib/api";
 
-export const getPaginatedPosts = async (page = 1, limit = 6) => {
-    const res = await api.get("/post/postspaginated", {
-        params: {
-            page: Number(page),
-            limit: Number(limit),
-        },
-    });
-    return res.data;
-};
+export async function getPaginatedPosts(page = 1, pageSize = 6, typeSlug?: string) {
+    const qs = new URLSearchParams({ page: String(page), limit: String(pageSize) });
+    if (typeSlug) qs.set("type", typeSlug);
+    const { data } = await api.get(`/post/postspaginated?${qs.toString()}`);
+    return data;
+}
 
 export const getTopViewedPosts = async (limit = 3) => {
     const res = await api.get("/post/top", {

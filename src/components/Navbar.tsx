@@ -4,6 +4,7 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import NewPostModal from "@/components/NewPostModal";
+import { PostType, PostTypeSlug } from "@/lib/postTypes";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -29,12 +30,22 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="/" className="nav-link">Início</a>
-            <a href="/receitas" className="nav-link">Receitas</a>
-            <a href="/artigos" className="nav-link">Artigos</a>
-            <a href="/calculadoras" className="nav-link">Calculadoras</a>
+            <Link to="/" className="nav-link">Início</Link>
+            <Link to={`/?type=${PostTypeSlug[PostType.RECEITA]}`} className="nav-link">Receitas</Link>
+            <Link to={`/?type=${PostTypeSlug[PostType.SAUDE]}`} className="nav-link">Saúde</Link>
+            <Link to={`/?type=${PostTypeSlug[PostType.ARTIGO]}`} className="nav-link">Artigos</Link>
+            <Link to={`/?type=${PostTypeSlug[PostType.ALIMENTACAO]}`} className="nav-link">Alimentação</Link>
+            <Link to={`/?type=${PostTypeSlug[PostType.DICAS]}`} className="nav-link">Dicas</Link>
+            <Link to={`/?type=${PostTypeSlug[PostType.NOVIDADES]}`} className="nav-link">Novidades</Link>
 
-            {/* Botão Novo Post - só admin */}
+            {!loading && isAuthenticated && user?.role === "admin" && (
+              <button 
+                onClick={() => navigate("/patients")}
+                className="px-3 py-1.5 rounded-md bg-primary text-white hover:opacity-90 transition"
+              >
+                Pacientes
+              </button>
+            )}
             {!loading && isAuthenticated && user?.role === "admin" && (
               <button
                 onClick={() => setShowNewPost(true)}
