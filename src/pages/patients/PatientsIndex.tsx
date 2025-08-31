@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import api from "@/lib/api";
+import { get } from "http";
+import { getErrorMessage } from "@/lib/errors";
 
 type Patient = {
     id: number;
@@ -18,7 +20,6 @@ type Patient = {
 export default function PatientsIndex() {
     const [patients, setPatients] = useState<Patient[]>([]);
     const [q, setQ] = useState("");
-    const [error, setError] = useState<string | null>(null);
     const nav = useNavigate();
 
     useEffect(() => {
@@ -26,10 +27,8 @@ export default function PatientsIndex() {
             try {
                 const { data } = await api.get("/users", { params: { role: "user" } });
                 setPatients(data.items ?? data);
-            } catch (err: any) {
-                // Mostra motivo (404/403) em vez de “sumir”
-                setError(err?.response?.data?.error || `${err?.response?.status || ""} ${err?.message}`);
-                setPatients([]);
+            } catch (err: unknown) {
+                alert(getErrorMessage(err));
             }
         })();
     }, []);

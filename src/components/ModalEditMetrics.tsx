@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import api from "@/lib/api";
 import { nivelFromBackend } from "@/lib/metrics";
+import { get } from "http";
+import { getErrorMessage } from "@/lib/errors";
 
 interface ModalEditMetricsProps {
     open: boolean;
@@ -18,13 +20,20 @@ interface ModalEditMetricsProps {
         gorduraCorporal?: number;
     };
     onSuccess?: () => void;
+    userId?: number;
 }
 
 function backendToLabel(code?: string) {
     return code ? (nivelFromBackend[code] ?? code) : "Sedentário";
 }
 
-export function ModalEditMetrics({ open, onClose, initialData, onSuccess }: ModalEditMetricsProps) {
+export function ModalEditMetrics({
+    open,
+    onClose,
+    initialData = {},
+    onSuccess,
+    userId,
+}: ModalEditMetricsProps) {
     const [peso, setPeso] = useState(initialData.peso?.toString() || "");
     const [altura, setAltura] = useState(initialData.altura?.toString() || "");
     const [idade, setIdade] = useState(initialData.idade?.toString() || "");
@@ -32,29 +41,43 @@ export function ModalEditMetrics({ open, onClose, initialData, onSuccess }: Moda
     const [nivelAtividade, setNivelAtividade] = useState(
         initialData.nivelAtividade || "Sedentário"
     );
-    const [gorduraCorporal, setGorduraCorporal] = useState(initialData.gorduraCorporal?.toString() || "");
+    const [gorduraCorporal, setGorduraCorporal] = useState(
+        initialData.gorduraCorporal?.toString() || ""
+    );
     const [loading, setLoading] = useState(false);
 
     const handleSave = async () => {
         try {
             setLoading(true);
-            await api.post("/metrics", {
-                peso: peso.replace(",", "."),
-                altura: altura.replace(",", "."),
-                idade: parseInt(idade),
-                sexo,
-                nivelAtividade,
-                gorduraCorporal: gorduraCorporal ? gorduraCorporal.replace(",", ".") : undefined
-            });
+
+            // monta payload somente com campos preenchidos
+            const payload: Record<string, unknown> = { userId };
+
+            const pesoTrim = peso.trim();
+            if (pesoTrim !== "") payload.peso = pesoTrim.replace(",", ".");
+
+            const alturaTrim = altura.trim();
+            if (alturaTrim !== "") payload.altura = alturaTrim.replace(",", ".");
+
+            const idadeTrim = idade.trim();
+            if (idadeTrim !== "") payload.idade = Number(idadeTrim);
+
+            if (sexo) payload.sexo = sexo; // manter sempre ok
+            if (nivelAtividade) payload.nivelAtividade = nivelAtividade;
+
+            const gcTrim = gorduraCorporal.trim();
+            if (gcTrim !== "") payload.gorduraCorporal = gcTrim.replace(",", ".");
+
+            await api.post("/metrics", payload);
+
             onClose();
             onSuccess?.();
-        } catch (err) {
-            console.error("Erro ao salvar métricas:", err);
+        } catch (err: unknown) {
+            alert(getErrorMessage(err) || "Erro ao salvar métricas");
         } finally {
             setLoading(false);
         }
     };
-
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="z-50">

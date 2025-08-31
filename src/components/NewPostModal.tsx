@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { createPost } from "@/lib/posts";
 import { useNavigate } from "react-router-dom";
+import { get } from "http";
+import { getErrorMessage } from "@/lib/errors";
 
 const POST_TYPES = [
     "Receita",
@@ -43,8 +45,8 @@ export default function NewPostModal({ open, onClose }: { open: boolean; onClose
             onClose();
             // redireciona para o post recém-criado, se o backend retornar { id }
             if (created?.id) navigate(`/posts/${created.id}`);
-        } catch (err: any) {
-            alert(err?.response?.data?.error || err.message);
+        } catch (err: unknown) {
+            alert(getErrorMessage(err));
         } finally {
             setIsSubmitting(false);
         }

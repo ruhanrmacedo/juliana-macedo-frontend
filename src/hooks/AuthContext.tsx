@@ -1,29 +1,12 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "@/lib/api";
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  setUser: (user: User | null) => void;
-  loading: boolean;
-  logout: () => void;
-  isAuthenticated: boolean;
-}
-
-const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+import { AuthContext, User } from "./auth-core";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
+    const stored = localStorage.getItem("user");
+    return stored ? JSON.parse(stored) : null;
   });
-
   const [loading, setLoading] = useState(true);
 
   const fetchUser = async () => {
@@ -33,11 +16,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
       return;
     }
-
     try {
-      const res = await api.get("/auth/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get("/auth/me", { headers: { Authorization: `Bearer ${token}` } });
       setUser(res.data);
       localStorage.setItem("user", JSON.stringify(res.data));
     } catch {
@@ -54,9 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
   };
 
-  useEffect(() => {
-    fetchUser();
-  }, []);
+  useEffect(() => { fetchUser(); }, []);
 
   return (
     <AuthContext.Provider value={{ user, setUser, loading, logout, isAuthenticated: !!user }}>
@@ -64,5 +42,3 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     </AuthContext.Provider>
   );
 };
-
-export const useAuth = () => useContext(AuthContext);

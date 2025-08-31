@@ -1,19 +1,27 @@
-// src/components/CalculatorMacronutrients.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import api from "@/lib/api";
 import { ChefHat } from "lucide-react";
 import ConfirmUpdate from "@/components/ConfirmUpdate";
 import {
   calcularTDEE,
-  parseNumberBR,
   NivelAtividadeFE,
   Sexo,
   nivelToBackendValue,
-  normalizePesoKg,
   normalizeAlturaToMeters,
   normalizeIdade,
+  normalizePesoKg,
 } from "@/lib/metrics";
 import { getErrorMessage } from "@/lib/errors";
+
+type Props = { patientId?: number };
+
+type MacrosResult = {
+  proteinas: string;
+  carboidratos: string;
+  gorduras: string;
+  mensagem: string;
+};
 
 const NIVEL_OPTIONS: NivelAtividadeFE[] = [
   "Sedentário",
@@ -23,11 +31,12 @@ const NIVEL_OPTIONS: NivelAtividadeFE[] = [
   "Atleta",
 ];
 
-type MacrosResult = {
-  proteinas: string;
-  carboidratos: string;
-  gorduras: string;
-  mensagem: string;
+const backendNivelToFE: Record<string, NivelAtividadeFE> = {
+  "Sedentário": "Sedentário",
+  "Levemente Ativo": "Levemente Ativo",
+  "Moderadamente Ativo": "Moderadamente Ativo",
+  "Altamente Ativo": "Altamente Ativo",
+  "Atleta": "Atleta",
 };
 
 function calcularMacrosLocal(tdee: number): MacrosResult {
@@ -43,31 +52,36 @@ function calcularMacrosLocal(tdee: number): MacrosResult {
   };
 }
 
-const CalculatorMacronutrients = () => {
+export default function CalculatorMacronutrients({ patientId }: Props) {
   const isAuthenticated = Boolean(localStorage.getItem("token"));
 
-  // exibição
   const [showForm, setShowForm] = useState(false);
   const [showResult, setShowResult] = useState(false);
 
-  // form
   const [peso, setPeso] = useState("");
-  const [altura, setAltura] = useState(""); // cm ou m
+  const [altura, setAltura] = useState("");
   const [idade, setIdade] = useState("");
   const [sexo, setSexo] = useState<Sexo>("M");
   const [nivel, setNivel] = useState<NivelAtividadeFE>("Moderadamente Ativo");
 
-  // resultado
   const [result, setResult] = useState<MacrosResult | null>(null);
-
-  // modal confirmar update
   const [askUpdate, setAskUpdate] = useState(false);
 
-  // Usa métricas salvas (backend)
-  const fetchFromBackend = async () => {
+  const fetchForPatient = async () => {
     try {
-      const res = await api.get("/metrics/macronutrients");
-      setResult(res.data);
+      const { data } = await api.get("/metrics", { params: { userId: patientId } });
+      const last = (data as Array<any>)[0];
+      if (!last) throw new Error("Paciente sem métricas.");
+
+      const tdee = calcularTDEE({
+        pesoKg: Number(last.peso),
+        alturaCm: Number(last.altura) * 100,
+        idade: Number(last.idade),
+        sexo: last.sexo as Sexo,
+        nivel: backendNivelToFE[String(last.nivelAtividade)] ?? "Moderadamente Ativo",
+      });
+      const macros = calcularMacrosLocal(tdee);
+      setResult(macros);
       setShowResult(true);
       setShowForm(false);
     } catch (err) {
@@ -75,13 +89,24 @@ const CalculatorMacronutrients = () => {
     }
   };
 
-  // Primeira ação (igual TDEE)
+  const fetchForMe = async () => {
+    try {
+      const res = await api.get("/metrics/macronutrients");
+      setResult(res.data as MacrosResult);
+      setShowResult(true);
+      setShowForm(false);
+    } catch (err) {
+      alert(getErrorMessage(err));
+    }
+  };
+
   const handlePrimaryClick = () => {
+    if (patientId) return fetchForPatient();
     if (!isAuthenticated) {
       alert("Você precisa estar logado para ver seus macronutrientes.");
       return;
     }
-    fetchFromBackend();
+    fetchForMe();
   };
 
   const onUsarNovamente = () => {
@@ -91,12 +116,9 @@ const CalculatorMacronutrients = () => {
 
   const onCalcular = () => {
     try {
-      // normaliza igual ao backend (lança erro se fora do plausível)
-      const pesoKg = normalizePesoKg(peso);                 // número em kg
-      const alturaM = normalizeAlturaToMeters(altura);      // número em metros
-      const idadeNum = normalizeIdade(idade);               // inteiro
-
-      // calcularTDEE espera altura em CM
+      const pesoKg = normalizePesoKg(peso);
+      const alturaM = normalizeAlturaToMeters(altura);
+      const idadeNum = normalizeIdade(idade);
       const tdee = calcularTDEE({
         pesoKg,
         alturaCm: alturaM * 100,
@@ -120,6 +142,7 @@ const CalculatorMacronutrients = () => {
     setAskUpdate(false);
     try {
       await api.post("/metrics", {
+        userId: patientId,
         peso: normalizePesoKg(peso),
         altura: normalizeAlturaToMeters(altura),
         idade: normalizeIdade(idade),
@@ -127,7 +150,6 @@ const CalculatorMacronutrients = () => {
         nivelAtividade: nivelToBackendValue[nivel],
         gorduraCorporal: null,
       });
-      // não precisa recarregar nada aqui
     } catch (err) {
       alert(getErrorMessage(err));
     }
@@ -140,14 +162,12 @@ const CalculatorMacronutrients = () => {
         <h3 className="font-heading font-bold text-xl">Calculadora de Macronutrientes</h3>
       </div>
 
-      {/* estado inicial */}
       {!showForm && !showResult && (
         <button onClick={handlePrimaryClick} className="btn-primary w-full">
           Ver Macronutrientes
         </button>
       )}
 
-      {/* formulário */}
       {showForm && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -229,7 +249,6 @@ const CalculatorMacronutrients = () => {
         </div>
       )}
 
-      {/* resultado */}
       {showResult && !showForm && result && (
         <div className="text-center space-y-2">
           <p>
@@ -250,7 +269,6 @@ const CalculatorMacronutrients = () => {
         </div>
       )}
 
-      {/* modal confirmar update (salvar métricas novas) */}
       <ConfirmUpdate
         open={askUpdate}
         onCancel={() => setAskUpdate(false)}
@@ -258,6 +276,4 @@ const CalculatorMacronutrients = () => {
       />
     </div>
   );
-};
-
-export default CalculatorMacronutrients;
+}

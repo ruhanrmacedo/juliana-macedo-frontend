@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/AuthContext";
 import { Trash2 } from "lucide-react";
 import { getErrorMessage, getStatus } from "@/lib/errors";
+import { useAuth } from "@/hooks/useAuth";
 
 
 interface Comment {

@@ -10,6 +10,7 @@ import {
 } from "@/lib/metrics";
 import { getErrorMessage } from "@/lib/errors";
 
+type Props = { patientId?: number };
 type ImcResult = { imc: string; classificacao: string };
 
 function classificarIMC(imc: number): string {
@@ -23,11 +24,12 @@ function classificarIMC(imc: number): string {
 
 const NIVEL_ATIVIDADE_DEFAULT = "Sedentário";
 
-const CalculatorIMC = () => {
+export default function CalculatorIMC({ patientId }: Props) {
   const isAuthenticated = Boolean(localStorage.getItem("token"));
+  const isPatientMode = typeof patientId === "number";
 
   // exibição
-  const [showForm, setShowForm] = useState(!isAuthenticated);
+  const [showForm, setShowForm] = useState(!isAuthenticated && !isPatientMode);
   const [showResult, setShowResult] = useState(false);
 
   // form
@@ -42,8 +44,22 @@ const CalculatorIMC = () => {
   // modal confirmar update
   const [askUpdate, setAskUpdate] = useState(false);
 
-  // usa métricas salvas (backend)
-  const fetchIMCFromBackend = async () => {
+  const fetchForPatient = async () => {
+    try {
+      // pega última métrica do paciente (admin)
+      const { data } = await api.get("/metrics", { params: { userId: patientId } });
+      const last = data?.[0];
+      if (!last) throw new Error("Paciente sem métricas.");
+      const imc = Number(last.peso) / (Number(last.altura) * Number(last.altura));
+      setResult({ imc: imc.toFixed(2), classificacao: classificarIMC(imc) });
+      setShowResult(true);
+      setShowForm(false);
+    } catch (err) {
+      alert(getErrorMessage(err));
+    }
+  };
+
+  const fetchForMe = async () => {
     try {
       const { data } = await api.get("/metrics/imc");
       setResult(data);
@@ -51,17 +67,17 @@ const CalculatorIMC = () => {
       setShowForm(false);
     } catch (err) {
       alert(getErrorMessage(err));
-
     }
   };
 
   const handlePrimaryClick = () => {
+    if (isPatientMode) return fetchForPatient();
     if (!isAuthenticated) {
       setShowForm(true);
       setShowResult(false);
       return;
     }
-    fetchIMCFromBackend();
+    fetchForMe();
   };
 
   const onUsarNovamente = () => {
@@ -73,12 +89,10 @@ const CalculatorIMC = () => {
     try {
       const pesoKg = normalizePesoKg(peso);
       const alturaM = normalizeAlturaToMeters(altura);
-
       const imc = pesoKg / (alturaM * alturaM);
-      setResult({ imc: imc.toFixed(1), classificacao: classificarIMC(imc) });
+      setResult({ imc: imc.toFixed(2), classificacao: classificarIMC(imc) });
       setShowResult(true);
       setShowForm(false);
-
       if (isAuthenticated) setAskUpdate(true);
     } catch (err) {
       alert(getErrorMessage(err));
@@ -91,41 +105,32 @@ const CalculatorIMC = () => {
       await api.post("/metrics", {
         peso: normalizePesoKg(peso),
         altura: normalizeAlturaToMeters(altura),
-        idade: normalizeIdade(idade), // usado no 1º cadastro
-        sexo,                        // usado no 1º cadastro
-        nivelAtividade: NIVEL_ATIVIDADE_DEFAULT, // exigido no 1º cadastro
+        idade: normalizeIdade(idade),
+        sexo,
+        nivelAtividade: NIVEL_ATIVIDADE_DEFAULT,
         gorduraCorporal: null,
+        ...(isPatientMode ? { userId: patientId } : {}),
       });
     } catch (err) {
       alert(getErrorMessage(err));
     }
   };
 
-  const reset = () => {
-    setResult(null);
-    setShowResult(false);
-    setShowForm(!isAuthenticated);
-    setAltura("");
-    setPeso("");
-    setIdade("");
-    setSexo("M");
-  };
-
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm">
       <div className="flex items-center space-x-2 mb-6">
         <CalculatorIcon className="text-primary" size={24} />
-        <h3 className="font-heading font-bold text-xl">Calculadora de IMC</h3>
+        <h3 className="font-heading font-bold text-xl">
+          Calculadora de IMC {isPatientMode ? "(paciente)" : ""}
+        </h3>
       </div>
 
-      {/* estado inicial */}
       {!showForm && !showResult && (
         <button onClick={handlePrimaryClick} className="btn-primary w-full">
-          Ver IMC
+          {isPatientMode ? "Ver IMC do paciente" : "Ver IMC"}
         </button>
       )}
 
-      {/* formulário */}
       {showForm && (
         <form
           onSubmit={(e) => {
@@ -161,7 +166,7 @@ const CalculatorIMC = () => {
             </div>
           </div>
 
-          {/* Campos usados apenas para salvar no 1º cadastro */}
+          {/* Campos apenas para salvar 1ª vez */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm mb-1">Idade (anos)</label>
@@ -188,9 +193,7 @@ const CalculatorIMC = () => {
           </div>
 
           <div className="flex gap-2">
-            <button type="submit" className="btn-primary w-full">
-              Calcular IMC
-            </button>
+            <button type="submit" className="btn-primary w-full">Calcular IMC</button>
             <button
               onClick={() => {
                 setShowForm(false);
@@ -204,11 +207,10 @@ const CalculatorIMC = () => {
         </form>
       )}
 
-      {/* resultado */}
       {showResult && !showForm && result && (
         <div className="space-y-4 text-center">
           <p className="text-lg font-semibold">
-            Seu IMC é: <span className="text-primary">{result.imc}</span>
+            IMC: <span className="text-primary">{result.imc}</span>
           </p>
           <p className="text-gray-700 font-medium">{result.classificacao}</p>
           <button onClick={onUsarNovamente} className="btn-primary w-full">
@@ -222,11 +224,6 @@ const CalculatorIMC = () => {
         onCancel={() => setAskUpdate(false)}
         onConfirm={onConfirmUpdate}
       />
-
-      {/* reset opcional (não aparece por padrão aqui) */}
-      {/* <button onClick={reset}>Reset</button> */}
     </div>
   );
-};
-
-export default CalculatorIMC;
+}

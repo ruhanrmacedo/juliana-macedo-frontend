@@ -9,18 +9,41 @@ import api from "@/lib/api";
 
 type Phone = { id: number; number: string };
 type EmailAlt = { id: number; email: string };
-type Address = { id: number; street: string; city: string; state: string; postalCode: string; country: string };
+export type AddressForm = {
+  postalCode: string;
+  street: string;
+  number?: string;
+  complement?: string;
+  city: string;
+  state: string;
+  country: string;
+};
+type Address = AddressForm & { id: number };
 
 type Patient = {
   id: number;
   name: string;
-  email: string; // e-mail de login
+  email: string;
   cpf: string;
   role: "admin" | "user";
   dataNascimento: string;
   phones?: Phone[];
-  emails?: EmailAlt[];     // e-mails alternativos
+  emails?: EmailAlt[];
   addresses?: Address[];
+};
+
+type ModalEditState = {
+  label: string;
+  value: string;
+  endpoint: string;
+  fieldName: string;
+  method?: "put" | "patch" | "post";
+};
+
+type ModalAddressState = {
+  method: "post" | "put";
+  endpoint: string;
+  initialData?: Partial<AddressForm>;
 };
 
 function formatCPF(cpf?: string) {
@@ -38,10 +61,27 @@ function formatPhone(v?: string) {
 }
 
 export default function PatientProfile() {
+  // 1) Hooks sempre no topo
   const outlet = useOutletContext<{ patient: Patient | null }>();
   const patient = outlet?.patient ?? null;
 
-  // guard contra estado inicial null
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalData, setModalData] = useState<ModalEditState>({
+    label: "",
+    value: "",
+    endpoint: "",
+    fieldName: "",
+    method: "put",
+  });
+
+  const [modalAddressOpen, setModalAddressOpen] = useState(false);
+  const [modalAddressData, setModalAddressData] = useState<ModalAddressState>({
+    method: "post",
+    endpoint: "",
+    initialData: {},
+  });
+
+  // 2) Skeleton enquanto carrega
   if (!patient) {
     return (
       <Card>
@@ -52,35 +92,17 @@ export default function PatientProfile() {
     );
   }
 
-  // Modais (reaproveitando seus componentes genéricos)
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalData, setModalData] = useState<{
-    label: string;
-    value: string;
-    endpoint: string;
-    fieldName: string;
-    method?: "put" | "patch" | "post";
-  }>({ label: "", value: "", endpoint: "", fieldName: "", method: "put" });
-
-  const [modalAddressOpen, setModalAddressOpen] = useState(false);
-  const [modalAddressData, setModalAddressData] = useState<{
-    method: "post" | "put";
-    endpoint: string;
-    initialData?: any;
-  }>({ method: "post", endpoint: "", initialData: {} });
-
   const openField = (label: string, fieldName: string, value: string) => {
     setModalData({
       label,
       value,
-      endpoint: `/admin/users/${patient.id}`, // PUT parcial
+      endpoint: `/admin/users/${patient.id}`,
       fieldName,
       method: "put",
     });
     setModalOpen(true);
   };
 
-  // remoções simples com confirm (opcional: trocar por modal/Toast)
   const removePhone = async (id: number) => {
     if (!confirm("Remover este telefone?")) return;
     await api.delete(`/admin/users/${patient.id}/phones/${id}`);
@@ -107,54 +129,27 @@ export default function PatientProfile() {
         <CardContent className="space-y-8">
           <h2 className="text-xl font-bold">🧍 Dados do Paciente</h2>
 
-          {/* Dados sensíveis / cadastrais */}
           <div className="grid gap-3 sm:grid-cols-2">
-            <p>
-              <strong>Nome:</strong> {patient.name}{" "}
+            <p><strong>Nome:</strong> {patient.name}{" "}
               <Button size="sm" variant="ghost" onClick={() => openField("Nome", "name", patient.name)}>✏️</Button>
             </p>
-
-            <p>
-              <strong>CPF:</strong> {formatCPF(patient.cpf)}{" "}
+            <p><strong>CPF:</strong> {formatCPF(patient.cpf)}{" "}
               <Button size="sm" variant="ghost" onClick={() => openField("CPF", "cpf", patient.cpf)}>✏️</Button>
             </p>
-
-            <p>
-              <strong>E-mail (login):</strong> {patient.email}{" "}
+            <p><strong>E-mail (login):</strong> {patient.email}{" "}
               <Button size="sm" variant="ghost" onClick={() => openField("E-mail (login)", "email", patient.email)}>✏️</Button>
             </p>
-
-            <p>
-              <strong>Nascimento:</strong>{" "}
-              {patient.dataNascimento ? new Date(patient.dataNascimento).toLocaleDateString() : "—"}{" "}
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() =>
-                  openField(
-                    "Data de nascimento (YYYY-MM-DD)",
-                    "dataNascimento",
-                    patient.dataNascimento?.slice(0, 10) || ""
-                  )
-                }
-              >
+            <p><strong>Nascimento:</strong> {patient.dataNascimento ? new Date(patient.dataNascimento).toLocaleDateString() : "—"}{" "}
+              <Button size="sm" variant="ghost"
+                onClick={() => openField("Data de nascimento (YYYY-MM-DD)", "dataNascimento", patient.dataNascimento?.slice(0, 10) || "")}>
                 ✏️
               </Button>
             </p>
-
-            <p className="sm:col-span-2">
-              <strong>Tipo de usuário:</strong> {patient.role}{" "}
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => openField("Tipo de usuário (admin/user)", "role", patient.role)}
-              >
-                ✏️
-              </Button>
+            <p className="sm:col-span-2"><strong>Tipo de usuário:</strong> {patient.role}{" "}
+              <Button size="sm" variant="ghost" onClick={() => openField("Tipo de usuário (admin/user)", "role", patient.role)}>✏️</Button>
             </p>
           </div>
 
-          {/* Credenciais */}
           <div className="rounded-lg border p-3">
             <div className="flex items-center justify-between">
               <div className="font-semibold">Credenciais & Acesso</div>
@@ -175,9 +170,7 @@ export default function PatientProfile() {
                 🔒 Definir nova senha
               </Button>
             </div>
-            <p className="mt-1 text-xs text-neutral-500">
-              Esta ação sobrescreve a senha atual do paciente.
-            </p>
+            <p className="mt-1 text-xs text-neutral-500">Esta ação sobrescreve a senha atual do paciente.</p>
           </div>
 
           {/* Telefones */}
@@ -197,9 +190,7 @@ export default function PatientProfile() {
                   });
                   setModalOpen(true);
                 }}
-              >
-                ➕ Novo telefone
-              </Button>
+              >➕ Novo telefone</Button>
             </div>
             {phones.length === 0 ? (
               <p className="text-sm text-neutral-600">Nenhum telefone cadastrado.</p>
@@ -222,9 +213,7 @@ export default function PatientProfile() {
                           });
                           setModalOpen(true);
                         }}
-                      >
-                        ✏️
-                      </Button>
+                      >✏️</Button>
                       <Button variant="ghost" size="sm" onClick={() => removePhone(p.id)}>🗑️</Button>
                     </div>
                   </li>
@@ -250,9 +239,7 @@ export default function PatientProfile() {
                   });
                   setModalOpen(true);
                 }}
-              >
-                ➕ Novo e-mail
-              </Button>
+              >➕ Novo e-mail</Button>
             </div>
             {emailsAlt.length === 0 ? (
               <p className="text-sm text-neutral-600">Nenhum e-mail alternativo.</p>
@@ -275,9 +262,7 @@ export default function PatientProfile() {
                           });
                           setModalOpen(true);
                         }}
-                      >
-                        ✏️
-                      </Button>
+                      >✏️</Button>
                       <Button variant="ghost" size="sm" onClick={() => removeEmail(e.id)}>🗑️</Button>
                     </div>
                   </li>
@@ -300,9 +285,7 @@ export default function PatientProfile() {
                   });
                   setModalAddressOpen(true);
                 }}
-              >
-                ➕ Novo endereço
-              </Button>
+              >➕ Novo endereço</Button>
             </div>
             {addresses.length === 0 ? (
               <p className="text-sm text-neutral-600">Nenhum endereço cadastrado.</p>
@@ -310,7 +293,7 @@ export default function PatientProfile() {
               <ul className="space-y-1">
                 {addresses.map((a) => (
                   <li key={a.id} className="flex items-center justify-between rounded border px-3 py-2 text-sm">
-                    {a.street}, {a.city} - {a.state} • {a.postalCode} • {a.country}
+                    {a.street}{a.number ? `, ${a.number}` : ""}{a.complement ? ` - ${a.complement}` : ""}, {a.city} - {a.state} • {a.postalCode} • {a.country}
                     <div className="space-x-2">
                       <Button
                         variant="ghost"
@@ -323,9 +306,7 @@ export default function PatientProfile() {
                           });
                           setModalAddressOpen(true);
                         }}
-                      >
-                        ✏️
-                      </Button>
+                      >✏️</Button>
                       <Button variant="ghost" size="sm" onClick={() => removeAddress(a.id)}>🗑️</Button>
                     </div>
                   </li>
@@ -336,19 +317,8 @@ export default function PatientProfile() {
         </CardContent>
       </Card>
 
-      <ModalEdit
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        {...modalData}
-        onSuccess={() => window.location.reload()}
-      />
-
-      <ModalAddress
-        open={modalAddressOpen}
-        onClose={() => setModalAddressOpen(false)}
-        {...modalAddressData}
-        onSuccess={() => window.location.reload()}
-      />
+      <ModalEdit open={modalOpen} onClose={() => setModalOpen(false)} {...modalData} onSuccess={() => window.location.reload()} />
+      <ModalAddress open={modalAddressOpen} onClose={() => setModalAddressOpen(false)} {...modalAddressData} onSuccess={() => window.location.reload()} />
     </>
   );
 }

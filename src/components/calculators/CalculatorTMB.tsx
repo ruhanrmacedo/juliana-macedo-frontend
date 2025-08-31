@@ -10,44 +10,50 @@ import {
 } from "@/lib/metrics";
 import { getErrorMessage } from "@/lib/errors";
 
+type Props = { patientId?: number };
 type TmbResult = { tmb: string; mensagem: string };
 
 // mesma fórmula do backend (Harris-Benedict)
 function calcularTMBLocal(pesoKg: number, alturaM: number, idade: number, sexo: Sexo) {
-  if (sexo === "M") {
-    return 66 + 13.7 * pesoKg + 5 * (alturaM * 100) - 6.8 * idade;
-  }
+  if (sexo === "M") return 66 + 13.7 * pesoKg + 5 * (alturaM * 100) - 6.8 * idade;
   return 655 + 9.6 * pesoKg + 1.8 * (alturaM * 100) - 4.7 * idade;
 }
-
 function msgTMB(tmb: number) {
   return `Sua Taxa Metabólica Basal estimada é de ${tmb.toFixed(0)} kcal. Essa é a energia mínima necessária para manter funções vitais em repouso.`;
 }
 
-// valor padrão do enum no backend para salvar quando o usuário ainda não tem métricas
 const NIVEL_ATIVIDADE_DEFAULT = "Sedentário";
 
-const CalculatorTMB = () => {
+export default function CalculatorTMB({ patientId }: Props) {
   const isAuthenticated = Boolean(localStorage.getItem("token"));
+  const isPatientMode = typeof patientId === "number";
 
-  // exibição
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(!isAuthenticated && !isPatientMode);
   const [showResult, setShowResult] = useState(false);
 
-  // form
   const [peso, setPeso] = useState("");
   const [altura, setAltura] = useState(""); // m ou cm
   const [idade, setIdade] = useState("");
   const [sexo, setSexo] = useState<Sexo>("M");
 
-  // resultado
   const [result, setResult] = useState<TmbResult | null>(null);
-
-  // modal confirmar update
   const [askUpdate, setAskUpdate] = useState(false);
 
-  // usa métricas salvas (backend)
-  const fetchTMB = async () => {
+  const fetchForPatient = async () => {
+    try {
+      const { data } = await api.get("/metrics", { params: { userId: patientId } });
+      const last = data?.[0];
+      if (!last) throw new Error("Paciente sem métricas.");
+      const tmbVal = calcularTMBLocal(last.peso, last.altura, last.idade, last.sexo);
+      setResult({ tmb: tmbVal.toFixed(2), mensagem: msgTMB(tmbVal) });
+      setShowResult(true);
+      setShowForm(false);
+    } catch (err) {
+      alert(getErrorMessage(err));
+    }
+  };
+
+  const fetchForMe = async () => {
     try {
       const { data } = await api.get("/metrics/tmb");
       setResult(data);
@@ -59,13 +65,13 @@ const CalculatorTMB = () => {
   };
 
   const handlePrimaryClick = () => {
+    if (isPatientMode) return fetchForPatient();
     if (!isAuthenticated) {
-      // usuário não logado: abre formulário
       setShowForm(true);
       setShowResult(false);
       return;
     }
-    fetchTMB();
+    fetchForMe();
   };
 
   const onUsarNovamente = () => {
@@ -75,16 +81,13 @@ const CalculatorTMB = () => {
 
   const onCalcular = () => {
     try {
-      // normalizações (mesmas regras do backend)
       const pesoKg = normalizePesoKg(peso);
       const alturaM = normalizeAlturaToMeters(altura);
       const idadeNum = normalizeIdade(idade);
-
       const tmb = calcularTMBLocal(pesoKg, alturaM, idadeNum, sexo);
       setResult({ tmb: tmb.toFixed(2), mensagem: msgTMB(tmb) });
       setShowResult(true);
       setShowForm(false);
-
       if (isAuthenticated) setAskUpdate(true);
     } catch (err) {
       alert(getErrorMessage(err));
@@ -99,9 +102,9 @@ const CalculatorTMB = () => {
         altura: normalizeAlturaToMeters(altura),
         idade: normalizeIdade(idade),
         sexo,
-        // para 1º cadastro (backend exige um nível); se já houver histórico ele ignora
         nivelAtividade: NIVEL_ATIVIDADE_DEFAULT,
         gorduraCorporal: null,
+        ...(isPatientMode ? { userId: patientId } : {}),
       });
     } catch (err) {
       alert(getErrorMessage(err));
@@ -112,17 +115,17 @@ const CalculatorTMB = () => {
     <div className="bg-white p-6 rounded-lg shadow-sm">
       <div className="flex items-center space-x-2 mb-6">
         <Activity className="text-primary" size={24} />
-        <h3 className="font-heading font-bold text-xl">Calculadora de TMB</h3>
+        <h3 className="font-heading font-bold text-xl">
+          Calculadora de TMB {isPatientMode ? "(paciente)" : ""}
+        </h3>
       </div>
 
-      {/* estado inicial */}
       {!showForm && !showResult && (
         <button onClick={handlePrimaryClick} className="btn-primary w-full">
-          Ver TMB
+          {isPatientMode ? "Ver TMB do paciente" : "Ver TMB"}
         </button>
       )}
 
-      {/* formulário */}
       {showForm && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -178,9 +181,7 @@ const CalculatorTMB = () => {
           </div>
 
           <div className="flex gap-2">
-            <button onClick={onCalcular} className="btn-primary flex-1">
-              Calcular
-            </button>
+            <button onClick={onCalcular} className="btn-primary flex-1">Calcular</button>
             <button
               onClick={() => {
                 setShowForm(false);
@@ -194,7 +195,6 @@ const CalculatorTMB = () => {
         </div>
       )}
 
-      {/* resultado */}
       {showResult && !showForm && result && (
         <div className="text-center space-y-3">
           <p className="text-lg font-semibold">
@@ -207,7 +207,6 @@ const CalculatorTMB = () => {
         </div>
       )}
 
-      {/* modal confirmar update */}
       <ConfirmUpdate
         open={askUpdate}
         onCancel={() => setAskUpdate(false)}
@@ -215,6 +214,4 @@ const CalculatorTMB = () => {
       />
     </div>
   );
-};
-
-export default CalculatorTMB;
+}

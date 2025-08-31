@@ -5,13 +5,17 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import InputMask from "react-input-mask";
+import { getErrorMessage } from "@/lib/errors";
+
+type RecaptchaValue = string | null;
+type HtmlInputProps = React.InputHTMLAttributes<HTMLInputElement>;
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<RecaptchaValue>(null);
   const { setUser } = useAuth();
   const [showRecoverEmail, setShowRecoverEmail] = useState(false);
   const [cpf, setCpf] = useState("");
@@ -20,50 +24,37 @@ const Login = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [emailRecuperacao, setEmailRecuperacao] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!captchaToken) {
-      setError("Você precisa confirmar que não é um robô.");
-      toast({
-        title: "Erro",
-        description: "Você precisa confirmar que não é um robô.",
-        variant: "destructive",
-      });
+      const msg = "Você precisa confirmar que não é um robô.";
+      setError(msg);
+      toast({ title: "Erro", description: msg, variant: "destructive" });
       return;
     }
 
     try {
-      const response = await api.post("http://localhost:3000/auth/login", {
+      const response = await api.post("/auth/login", {
         email,
         password,
         captchaToken,
       });
 
-      const token = response.data.token;
-
+      const token: string = response.data.token;
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
       setUser(response.data.user);
 
-      const check = await api.get("http://localhost:3000/metrics/check", {
+      const check = await api.get("/metrics/check", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!check.data.hasMetrics) {
-        navigate("/metrics");
-      } else {
-        navigate("/");
-      }
-
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || "Erro ao fazer login";
+      navigate(check.data.hasMetrics ? "/" : "/metrics");
+    } catch (err: unknown) {
+      const errorMsg = getErrorMessage(err) || "Erro ao fazer login";
       setError(errorMsg);
-      toast({
-        title: "Erro no login",
-        description: errorMsg,
-        variant: "destructive",
-      });
+      toast({ title: "Erro no login", description: errorMsg, variant: "destructive" });
     }
   };
 
@@ -87,29 +78,21 @@ const Login = () => {
       return;
     }
 
-    const dataFormatada = parsedDate.toISOString().split("T")[0]; // garante "YYYY-MM-DD"
+    const dataFormatada = parsedDate.toISOString().split("T")[0];
 
     try {
-      const response = await api.post("http://localhost:3000/auth/recover-email", {
+      const response = await api.post("/auth/recover-email", {
         cpf,
         dataNascimento: dataFormatada,
       });
 
       setEmailRecuperado(response.data.email);
-      setCpf(""); // limpar campo
-      setDataNascimento(""); // limpar campo
-
-      toast({
-        title: "E-mail encontrado",
-        description: `E-mail: ${response.data.email}`,
-      });
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || "Erro ao recuperar e-mail";
-      toast({
-        title: "Erro",
-        description: errorMsg,
-        variant: "destructive",
-      });
+      setCpf("");
+      setDataNascimento("");
+      toast({ title: "E-mail encontrado", description: `E-mail: ${response.data.email}` });
+    } catch (err: unknown) {
+      const errorMsg = getErrorMessage(err) || "Erro ao recuperar e-mail";
+      toast({ title: "Erro", description: errorMsg, variant: "destructive" });
     }
   };
 
@@ -123,33 +106,19 @@ const Login = () => {
       return;
     }
 
-    const confirmar = window.confirm(
-      "Uma nova senha será gerada e enviada para o e-mail informado. Deseja continuar?"
-    );
-    if (!confirmar) return;
+    if (!window.confirm("Uma nova senha será gerada e enviada para o e-mail informado. Deseja continuar?"))
+      return;
 
     try {
-      await api.post("http://localhost:3000/auth/forgot-password", {
-        email: emailRecuperacao,
-      });
-
-      toast({
-        title: "Senha redefinida",
-        description: "Uma nova senha foi enviada ao seu e-mail.",
-      });
-
+      await api.post("/auth/forgot-password", { email: emailRecuperacao });
+      toast({ title: "Senha redefinida", description: "Uma nova senha foi enviada ao seu e-mail." });
       setEmailRecuperacao("");
       setShowForgotPassword(false);
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || "Erro ao recuperar senha";
-      toast({
-        title: "Erro",
-        description: errorMsg,
-        variant: "destructive",
-      });
+    } catch (err: unknown) {
+      const errorMsg = getErrorMessage(err) || "Erro ao recuperar senha";
+      toast({ title: "Erro", description: errorMsg, variant: "destructive" });
     }
   };
-
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-green-600 p-4">
@@ -163,7 +132,7 @@ const Login = () => {
               type="email"
               className="w-full p-2 border rounded-md"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
               required
             />
           </div>
@@ -174,7 +143,7 @@ const Login = () => {
               type="password"
               className="w-full p-2 border rounded-md"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               required
             />
           </div>
@@ -182,7 +151,7 @@ const Login = () => {
           <div className="flex justify-center">
             <ReCAPTCHA
               sitekey="6LcnJTIrAAAAAGIhtkU_1SDgIgWnPsux4tHwniPL"
-              onChange={(token) => setCaptchaToken(token)}
+              onChange={(token: RecaptchaValue) => setCaptchaToken(token)}
             />
           </div>
 
@@ -206,11 +175,11 @@ const Login = () => {
               <InputMask
                 mask="999.999.999-99"
                 value={cpf}
-                onChange={(e) => setCpf(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCpf(e.target.value)}
               >
-                {(inputProps: any) => (
+                {(inputProps) => (
                   <input
-                    {...inputProps}
+                    {...(inputProps as HtmlInputProps)}
                     type="text"
                     className="w-full p-2 border rounded-md"
                     placeholder="000.000.000-00"
@@ -225,15 +194,12 @@ const Login = () => {
                 type="date"
                 className="w-full p-2 border rounded-md"
                 value={dataNascimento}
-                onChange={(e) => setDataNascimento(e.target.value)}
-                max={new Date().toISOString().split("T")[0]} // impede datas futuras
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDataNascimento(e.target.value)}
+                max={new Date().toISOString().split("T")[0]}
               />
             </div>
 
-            <button
-              onClick={handleRecoverEmail}
-              className="w-full bg-blue-600 text-white p-2 rounded-md font-semibold"
-            >
+            <button onClick={handleRecoverEmail} className="w-full bg-blue-600 text-white p-2 rounded-md font-semibold">
               Recuperar e-mail
             </button>
 
@@ -256,14 +222,11 @@ const Login = () => {
                 className="w-full p-2 border rounded-md"
                 placeholder="Digite seu e-mail"
                 value={emailRecuperacao}
-                onChange={(e) => setEmailRecuperacao(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmailRecuperacao(e.target.value)}
               />
             </div>
 
-            <button
-              onClick={handleForgotPassword}
-              className="w-full bg-red-600 text-white p-2 rounded-md font-semibold"
-            >
+            <button onClick={handleForgotPassword} className="w-full bg-red-600 text-white p-2 rounded-md font-semibold">
               Enviar nova senha
             </button>
           </div>
@@ -294,10 +257,7 @@ const Login = () => {
         </div>
 
         <div className="mt-6">
-          <Link
-            to="/register"
-            className="block w-full bg-yellow-400 text-black py-2 rounded-md font-semibold text-center"
-          >
+          <Link to="/register" className="block w-full bg-yellow-400 text-black py-2 rounded-md font-semibold text-center">
             Ainda não tenho cadastro
           </Link>
         </div>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import api from "@/lib/api";
 import { Droplets } from "lucide-react";
@@ -11,6 +12,8 @@ import {
   nivelToBackendValue,
 } from "@/lib/metrics";
 import { getErrorMessage } from "@/lib/errors";
+
+type Props = { patientId?: number };
 
 const NIVEL_OPTIONS: NivelAtividadeFE[] = [
   "Sedentário",
@@ -37,31 +40,29 @@ function calcularAguaLocal(pesoKg: number): WaterResult {
   };
 }
 
-const CalculatorWater = () => {
+export default function CalculatorWater({ patientId }: Props) {
   const isAuthenticated = Boolean(localStorage.getItem("token"));
 
-  // exibição
-  const [showForm, setShowForm] = useState(!isAuthenticated);
+  const [showForm, setShowForm] = useState(!isAuthenticated && !patientId);
   const [showResult, setShowResult] = useState(false);
 
-  // form (peso obrigatório para cálculo; os demais só se quiser salvar a 1ª vez)
   const [peso, setPeso] = useState("");
-  const [altura, setAltura] = useState(""); // m ou cm (opcional p/salvar 1ª vez)
-  const [idade, setIdade] = useState("");   // opcional p/salvar 1ª vez
+  const [altura, setAltura] = useState("");
+  const [idade, setIdade] = useState("");
   const [sexo, setSexo] = useState<Sexo>("M");
   const [nivel, setNivel] = useState<NivelAtividadeFE>("Sedentário");
 
-  // resultado
   const [result, setResult] = useState<WaterResult | null>(null);
-
-  // modal confirmar update
   const [askUpdate, setAskUpdate] = useState(false);
 
-  // usa métricas salvas (backend)
-  const fetchWaterIntake = async () => {
+  const fetchForPatient = async () => {
     try {
-      const { data } = await api.get("/metrics/water");
-      setResult(data);
+      const { data } = await api.get("/metrics", { params: { userId: patientId } });
+      const last = (data as Array<any>)[0];
+      if (!last) throw new Error("Paciente sem métricas.");
+
+      const r = calcularAguaLocal(Number(last.peso));
+      setResult(r);
       setShowResult(true);
       setShowForm(false);
     } catch (err) {
@@ -69,14 +70,25 @@ const CalculatorWater = () => {
     }
   };
 
-  // estado inicial
+  const fetchForMe = async () => {
+    try {
+      const { data } = await api.get("/metrics/water");
+      setResult(data as WaterResult);
+      setShowResult(true);
+      setShowForm(false);
+    } catch (err) {
+      alert(getErrorMessage(err));
+    }
+  };
+
   const handlePrimaryClick = () => {
+    if (patientId) return fetchForPatient();
     if (!isAuthenticated) {
       setShowForm(true);
       setShowResult(false);
       return;
     }
-    fetchWaterIntake();
+    fetchForMe();
   };
 
   const onUsarNovamente = () => {
@@ -102,8 +114,8 @@ const CalculatorWater = () => {
     setAskUpdate(false);
     try {
       await api.post("/metrics", {
-        // se já tiver histórico, só o peso já atualiza;
-        // se for o 1º cadastro, os campos abaixo evitam erro no backend:
+        userId: patientId,
+        // para o primeiro cadastro (backend exige campos)
         peso: normalizePesoKg(peso),
         altura: altura ? normalizeAlturaToMeters(altura) : undefined,
         idade: idade ? normalizeIdade(idade) : undefined,
@@ -119,7 +131,7 @@ const CalculatorWater = () => {
   const reset = () => {
     setResult(null);
     setShowResult(false);
-    setShowForm(!isAuthenticated);
+    setShowForm(!isAuthenticated && !patientId);
     setPeso("");
     setAltura("");
     setIdade("");
@@ -134,14 +146,12 @@ const CalculatorWater = () => {
         <h3 className="font-heading font-bold text-xl">Calculadora de Água</h3>
       </div>
 
-      {/* estado inicial */}
       {!showForm && !showResult && (
         <button onClick={handlePrimaryClick} className="btn-primary w-full">
           Ver Consumo Diário
         </button>
       )}
 
-      {/* formulário */}
       {showForm && (
         <form
           onSubmit={(e) => {
@@ -164,7 +174,7 @@ const CalculatorWater = () => {
             />
           </div>
 
-          {/* seção opcional — só necessária para salvar o 1º registro */}
+          {/* seção opcional — ajuda no 1º cadastro do histórico */}
           <div className="pt-2 border-t">
             <p className="text-xs text-gray-500 mb-2">
               (Opcional) Preencha estes campos se quiser salvar no histórico pela primeira vez:
@@ -234,7 +244,6 @@ const CalculatorWater = () => {
         </form>
       )}
 
-      {/* resultado */}
       {showResult && !showForm && result && (
         <div className="text-center space-y-2">
           <p>
@@ -251,7 +260,6 @@ const CalculatorWater = () => {
         </div>
       )}
 
-      {/* modal confirmar update */}
       <ConfirmUpdate
         open={askUpdate}
         onCancel={() => setAskUpdate(false)}
@@ -259,6 +267,4 @@ const CalculatorWater = () => {
       />
     </div>
   );
-};
-
-export default CalculatorWater;
+}
