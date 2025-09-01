@@ -5,24 +5,49 @@ import AddVisitDialog from "@/components/gestation/AddVisitDialog";
 import { getCurrentGestation, listVisits } from "@/lib/gestation";
 import { Button } from "@/components/ui/button";
 import { GestationTrackingDTO, GestationVisitDTO } from "@/lib/gestationTypes";
+import { toast } from "sonner";
 
 export default function PatientGestational({ userId }: { userId: number }) {
     const [tracking, setTracking] = useState<GestationTrackingDTO | null>(null);
     const [visits, setVisits] = useState<GestationVisitDTO[]>([]);
+    const [loading, setLoading] = useState(false);
     const hasTracking = !!tracking?.id;
 
     const refresh = useCallback(async () => {
-        const t = await getCurrentGestation(userId);
-        setTracking(t);
-        if (t?.id) {
-            const list = await listVisits(t.id);
-            setVisits(list);
-        } else {
-            setVisits([]);
+        try {
+            setLoading(true);
+            const t = await getCurrentGestation(userId);
+            setTracking(t);
+            if (t?.id) {
+                const list = await listVisits(t.id);
+                setVisits(list);
+            } else {
+                setVisits([]);
+            }
+        } catch (error) {
+            console.error("Erro ao carregar dados gestacionais:", error);
+            toast.error("Erro ao carregar dados gestacionais");
+        } finally {
+            setLoading(false);
         }
     }, [userId]);
 
-    useEffect(() => { void refresh(); }, [refresh]);
+    useEffect(() => {
+        void refresh();
+    }, [refresh]);
+
+    if (loading) {
+        return (
+            <Card>
+                <CardContent className="space-y-4">
+                    <div>
+                        <h2 className="text-xl font-bold">🤰 Acompanhamento gestacional</h2>
+                        <p className="text-sm text-neutral-600">Carregando...</p>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
 
     return (
         <Card>
