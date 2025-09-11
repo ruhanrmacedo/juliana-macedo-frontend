@@ -62,8 +62,11 @@ export default function StartGestationDialog({ userId, onCreated }: { userId?: n
                         onChange={e => setForm(f => ({ ...f, alturaCm: e.target.value }))} />
                     <Input placeholder="Idade gestacional atual (semanas) — opcional" value={form.idadeGestacionalInicio}
                         onChange={e => setForm(f => ({ ...f, idadeGestacionalInicio: e.target.value }))} />
-                    <Input type="date" placeholder="Data da última menstruação" value={form.dum}
-                        onChange={e => setForm(f => ({ ...f, dum: e.target.value }))} />
+                    <label className="block">
+                        <span className="text-sm">Data da última menstruação</span>
+                        <Input type="date" value={form.dum}
+                            onChange={e => setForm(f => ({ ...f, dum: e.target.value }))} />
+                    </label>
                     <Select
                         value={form.tipo}
                         onValueChange={(v) => setForm(f => ({ ...f, tipo: v as GestationType }))}
