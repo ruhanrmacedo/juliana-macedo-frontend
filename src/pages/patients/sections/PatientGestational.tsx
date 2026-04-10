@@ -3,27 +3,40 @@ import { Card, CardContent } from "@/components/ui/card";
 import StartGestationDialog from "@/components/gestation/StartGestationDialog";
 import AddVisitDialog from "@/components/gestation/AddVisitDialog";
 import { getCurrentGestation, listVisits } from "@/lib/gestation";
-import { Button } from "@/components/ui/button";
-import { GestationTrackingDTO, GestationVisitDTO } from "@/lib/gestationTypes";
+import { GestationTrackingDTO, GestationType, GestationVisitDTO } from "@/lib/gestationTypes";
 import { toast } from "sonner";
+import { useParams } from "react-router-dom";
 
-export default function PatientGestational({ userId }: { userId: number }) {
+function Stat({ label, value }: { label: string; value: React.ReactNode }) {
+    return (
+        <div className="rounded-lg border p-3">
+            <div className="text-xs text-muted-foreground">{label}</div>
+            <div className="text-sm font-medium">{value}</div>
+        </div>
+    );
+}
+
+export default function PatientGestational() {
+    const { id } = useParams<{ id: string }>();
+    const userId = Number(id);
     const [tracking, setTracking] = useState<GestationTrackingDTO | null>(null);
     const [visits, setVisits] = useState<GestationVisitDTO[]>([]);
     const [loading, setLoading] = useState(false);
     const hasTracking = !!tracking?.id;
 
+    const tipoLabel: Record<GestationType, string> = {
+        UNICA: "Única",
+        GEMELAR: "Gemelar",
+        TRIGEMELAR: "Trigemelar",
+    };
+
     const refresh = useCallback(async () => {
         try {
+            if (!Number.isFinite(userId)) throw new Error("ID do paciente inválido");
             setLoading(true);
             const t = await getCurrentGestation(userId);
             setTracking(t);
-            if (t?.id) {
-                const list = await listVisits(t.id);
-                setVisits(list);
-            } else {
-                setVisits([]);
-            }
+            setVisits(t?.id ? await listVisits(t.id) : []);
         } catch (error) {
             console.error("Erro ao carregar dados gestacionais:", error);
             toast.error("Erro ao carregar dados gestacionais");
@@ -61,24 +74,39 @@ export default function PatientGestational({ userId }: { userId: number }) {
                     <StartGestationDialog userId={userId} onCreated={refresh} />
                 ) : (
                     <>
-                        <div className="flex items-center justify-between">
-                            <div className="text-sm">
-                                <div>IMC pré: <b>{tracking.bmiPre}</b> ({tracking.bmiClass})</div>
-                                <div>Meta de ganho: <b>{tracking.metaGanhoMinKg}–{tracking.metaGanhoMaxKg} kg</b></div>
+                        {/* Cabeçalho */}
+                        <div className="w-full max-w-5xl">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                <Stat label="IMC pré-gestacional" value={`${tracking.bmiPre} (${tracking.bmiClass})`} />
+                                <Stat label="Meta de ganho de peso" value={`${tracking.metaGanhoMinKg}–${tracking.metaGanhoMaxKg} kg`} />
+                                <Stat label="Peso pré-gestacional" value={`${tracking.pesoPreGestacional.toFixed(2)} kg`} />
+                                <Stat label="Altura/Estatura" value={`${Number(tracking.alturaCm).toFixed(0)} cm`} />
+                                <Stat label="Tipo de gestação" value={tipoLabel[tracking.tipoGestacao]} />
+                                <Stat label="Idade gestacional" value={`${tracking.idadeGestacionalAtual} semanas`} />
+                                <Stat label="DUM" value={new Date(tracking.dum).toLocaleDateString()} />
+                                <Stat label="Primeiro acompanhamento" value={new Date(tracking.dataPrimeiroAcompanhamento).toLocaleDateString()} />
+                                {/* novos */}
+                                <Stat label="IMC atual" value={tracking.imcAtual?.toFixed(1)} />
+                                <Stat label="Ganho acumulado" value={`${tracking.ganhoAcumuladoKg?.toFixed(1)} kg`} />
                             </div>
-                            <AddVisitDialog trackingId={tracking.id} onCreated={refresh} />
+
+                            {/* Botão abaixo e à direita */}
+                            <div className="flex justify-end mt-3">
+                                <AddVisitDialog trackingId={tracking.id} onCreated={refresh} />
+                            </div>
                         </div>
 
-                        <div className="overflow-auto rounded border">
+                        <div className="overflow-auto rounded border mt-2">
                             <table className="min-w-full text-sm">
                                 <thead className="bg-muted/40">
                                     <tr>
-                                        <th className="px-3 py-2 text-left">Data</th>
+                                        <th className="px-3 py-2 text-left">Data da visita</th>
                                         <th className="px-3 py-2 text-left">Peso (kg)</th>
-                                        <th className="px-3 py-2 text-left">IG (sem)</th>
-                                        <th className="px-3 py-2 text-left">Tri</th>
-                                        <th className="px-3 py-2 text-left">PA</th>
-                                        <th className="px-3 py-2 text-left">Obs</th>
+                                        <th className="px-3 py-2 text-left">Idade gestacional (semanas)</th>
+                                        <th className="px-3 py-2 text-left">Trimestre</th>
+                                        <th className="px-3 py-2 text-left">Pressão arterial</th>
+                                        <th className="px-3 py-2 text-left">Cintura (cm)</th>
+                                        <th className="px-3 py-2 text-left">Observações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -88,20 +116,22 @@ export default function PatientGestational({ userId }: { userId: number }) {
                                             <td className="px-3 py-2">{Number(v.pesoKg).toFixed(2)}</td>
                                             <td className="px-3 py-2">{v.idadeGestacional ?? "-"}</td>
                                             <td className="px-3 py-2">{v.trimestre ?? "-"}</td>
-                                            <td className="px-3 py-2">{v.paSistolica && v.paDiastolica ? `${v.paSistolica}/${v.paDiastolica}` : "-"}</td>
+                                            <td className="px-3 py-2">
+                                                {v.paSistolica && v.paDiastolica ? `${v.paSistolica}/${v.paDiastolica}` : "-"}
+                                            </td>
+                                            <td className="px-3 py-2">{v.cinturaCm ?? "-"}</td>
                                             <td className="px-3 py-2">{v.observacoes || "-"}</td>
                                         </tr>
                                     ))}
                                     {visits.length === 0 && (
-                                        <tr><td className="px-3 py-6 text-center text-muted-foreground" colSpan={6}>Nenhuma visita registrada.</td></tr>
+                                        <tr>
+                                            <td className="px-3 py-6 text-center text-muted-foreground" colSpan={7}>
+                                                Nenhuma visita registrada.
+                                            </td>
+                                        </tr>
                                     )}
                                 </tbody>
                             </table>
-                        </div>
-
-                        {/* depois você pluga Recharts aqui com series de peso e ganho semanal */}
-                        <div className="text-xs text-muted-foreground">
-                            Em breve: gráficos de peso/ganho vs meta por trimestre.
                         </div>
                     </>
                 )}

@@ -15,8 +15,11 @@ export default function AddVisitDialog({ trackingId, onCreated }: { trackingId: 
         idadeGestacional: "",
         paSistolica: "",
         paDiastolica: "",
+        cinturaCm: "",
         observacoes: "",
     });
+
+
 
     async function submit() {
         try {
@@ -25,6 +28,7 @@ export default function AddVisitDialog({ trackingId, onCreated }: { trackingId: 
                 idadeGestacional: form.idadeGestacional ? Number(form.idadeGestacional) : undefined,
                 paSistolica: form.paSistolica ? Number(form.paSistolica) : undefined,
                 paDiastolica: form.paDiastolica ? Number(form.paDiastolica) : undefined,
+                cinturaCm: form.cinturaCm ? Number(form.cinturaCm) : undefined,
             });
             toast({ title: "Visita registrada!" });
             setOpen(false);
@@ -41,16 +45,21 @@ export default function AddVisitDialog({ trackingId, onCreated }: { trackingId: 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button>nova visita</Button></DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-2xl">
                 <DialogHeader><DialogTitle>Nova visita</DialogTitle></DialogHeader>
                 <div className="space-y-3">
                     <Input type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} />
                     <Input placeholder="Peso (kg)" value={form.pesoKg} onChange={e => setForm(f => ({ ...f, pesoKg: e.target.value }))} />
                     <Input placeholder="Idade gestacional (semanas) — opcional" value={form.idadeGestacional}
                         onChange={e => setForm(f => ({ ...f, idadeGestacional: e.target.value }))} />
+                    <Input
+                        placeholder="Circunferência da cintura (cm) — opcional"
+                        value={form.cinturaCm}
+                        onChange={e => setForm(f => ({ ...f, cinturaCm: e.target.value }))}
+                    />
                     <div className="grid grid-cols-2 gap-2">
-                        <Input placeholder="PA sistólica" value={form.paSistolica} onChange={e => setForm(f => ({ ...f, paSistolica: e.target.value }))} />
-                        <Input placeholder="PA diastólica" value={form.paDiastolica} onChange={e => setForm(f => ({ ...f, paDiastolica: e.target.value }))} />
+                        <Input placeholder="Pressão arterial máxima - PAS — opcional" value={form.paSistolica} onChange={e => setForm(f => ({ ...f, paSistolica: e.target.value }))} />
+                        <Input placeholder="Pressão arterial mínima - PAD — opcional" value={form.paDiastolica} onChange={e => setForm(f => ({ ...f, paDiastolica: e.target.value }))} />
                     </div>
                     <Input placeholder="Observações (opcional)" value={form.observacoes} onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))} />
                 </div>

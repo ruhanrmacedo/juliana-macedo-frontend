@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import type { UserMe, UserAddress, UserMetrics as TMetrics } from "@/lib/domain";
 import { getErrorMessage } from "@/lib/errors";
+import { ModalChangePassword } from "@/components/ModalChangePassword";
 
 type EditArgs = {
     label: string;
@@ -30,6 +31,8 @@ const Perfil = () => {
         fieldName: "",
         method: "put",
     });
+
+    const [modalPasswordOpen, setModalPasswordOpen] = useState(false);
 
     const [modalAddressOpen, setModalAddressOpen] = useState(false);
     const [modalAddressData, setModalAddressData] = useState<{
@@ -148,6 +151,20 @@ const Perfil = () => {
                             >
                                 ✏️
                             </Button>
+                        </div>
+
+                        <div className="sm:col-span-2 rounded-lg border p-3">
+                            <div className="flex items-center justify-between">
+                                <div className="font-semibold">Credenciais & Acesso</div>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setModalPasswordOpen(true)}
+                                >
+                                    🔒 Alterar senha
+                                </Button>
+                            </div>
+                            <p className="mt-1 text-xs text-neutral-500">Esta ação sobrescreve a sua senha atual.</p>
                         </div>
 
                         <div className="sm:col-span-2">
@@ -362,6 +379,12 @@ const Perfil = () => {
                     open={modalAddressOpen}
                     onClose={() => setModalAddressOpen(false)}
                     {...modalAddressData}
+                    onSuccess={() => window.location.reload()}
+                />
+
+                <ModalChangePassword
+                    open={modalPasswordOpen}
+                    onClose={() => setModalPasswordOpen(false)}
                     onSuccess={() => window.location.reload()}
                 />
 
