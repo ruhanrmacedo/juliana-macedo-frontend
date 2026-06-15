@@ -1,19 +1,27 @@
-import { useMemo, useState } from "react";
-import { createPost } from "@/lib/posts";
+import { useEffect, useMemo, useState } from "react";
+import { createPost, updatePost, AdminPostItem } from "@/lib/posts";
 import { useNavigate } from "react-router-dom";
-import { get } from "http";
 import { getErrorMessage } from "@/lib/errors";
+import DOMPurify from "dompurify";
+import RichTextEditor from "@/components/RichTextEditor";
 
-const POST_TYPES = [
-    "Receita",
-    "Saúde",
-    "Artigo",
-    "Alimentação",
-    "Dicas",
-    "Novidades",
-] as const;
+type Props = {
+    open: boolean;
+    onClose: () => void;
+    mode?: "create" | "edit";
+    initialData?: AdminPostItem | null;
+    onSuccess?: () => void | Promise<void>;
+};
 
-export default function NewPostModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+const POST_TYPES = ["Receita", "Saúde", "Artigo", "Alimentação", "Dicas", "Novidades"] as const;
+
+export default function NewPostModal({
+    open,
+    onClose,
+    mode = "create",
+    initialData = null,
+    onSuccess,
+}: Props) {
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [postType, setPostType] = useState<(typeof POST_TYPES)[number]>("Saúde");
@@ -23,6 +31,26 @@ export default function NewPostModal({ open, onClose }: { open: boolean; onClose
 
     const navigate = useNavigate();
 
+    useEffect(() => {
+        if (!open) return;
+
+        if (mode === "edit" && initialData) {
+            setTitle(initialData.title ?? "");
+            setContent(initialData.content ?? "");
+            setPostType((initialData.postType as (typeof POST_TYPES)[number]) ?? "Saúde");
+            setImageUrl(initialData.imageUrl ?? "");
+            setImageFile(null);
+        }
+
+        if (mode === "create") {
+            setTitle("");
+            setContent("");
+            setPostType("Saúde");
+            setImageUrl("");
+            setImageFile(null);
+        }
+    }, [open, mode, initialData]);
+
     const previewUrl = useMemo(() => {
         if (imageFile) return URL.createObjectURL(imageFile);
         if (imageUrl) return imageUrl;
@@ -30,6 +58,23 @@ export default function NewPostModal({ open, onClose }: { open: boolean; onClose
     }, [imageFile, imageUrl]);
 
     if (!open) return null;
+
+    const handleFile = (f?: File | null) => {
+        if (!f) return;
+
+        if (!f.type.startsWith("image/")) {
+            alert("Selecione uma imagem.");
+            return;
+        }
+
+        if (f.size > 5 * 1024 * 1024) {
+            alert("Imagem até 5MB.");
+            return;
+        }
+
+        setImageFile(f);
+        setImageUrl("");
+    };
 
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -40,10 +85,35 @@ export default function NewPostModal({ open, onClose }: { open: boolean; onClose
         }
 
         setIsSubmitting(true);
+
         try {
-            const created = await createPost({ title, content, postType, imageFile, imageUrl });
+            const cleanContent = DOMPurify.sanitize(content);
+
+            if (mode === "edit" && initialData?.id) {
+                await updatePost(initialData.id, {
+                    title,
+                    content: cleanContent,
+                    postType,
+                    imageFile,
+                    imageUrl,
+                });
+
+                await onSuccess?.();
+                onClose();
+                return;
+            }
+
+            const created = await createPost({
+                title,
+                content: cleanContent,
+                postType,
+                imageFile,
+                imageUrl,
+            });
+
+            await onSuccess?.();
             onClose();
-            // redireciona para o post recém-criado, se o backend retornar { id }
+
             if (created?.id) navigate(`/posts/${created.id}`);
         } catch (err: unknown) {
             alert(getErrorMessage(err));
@@ -52,27 +122,15 @@ export default function NewPostModal({ open, onClose }: { open: boolean; onClose
         }
     };
 
-    const handleFile = (f?: File | null) => {
-        if (!f) return;
-        if (!f.type.startsWith("image/")) {
-            alert("Selecione uma imagem.");
-            return;
-        }
-        if (f.size > 5 * 1024 * 1024) {
-            alert("Imagem até 5MB.");
-            return;
-        }
-        setImageFile(f);
-        setImageUrl("");
-    };
-
     return (
-        <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/40 p-4">
-            <div className="w-full max-w-2xl overflow-hidden rounded-2xl shadow-xl">
-                {/* Cabeçalho com vibe “nutrição” */}
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 p-4">
+            <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl shadow-xl">
                 <div className="bg-gradient-to-r from-emerald-500 to-lime-500 px-6 py-4 text-white">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-semibold">Novo Post</h2>
+                        <h2 className="text-lg font-semibold">
+                            {mode === "edit" ? "Editar Post" : "Novo Post"}
+                        </h2>
+
                         <button
                             onClick={onClose}
                             className="rounded-full bg-white/20 px-3 py-1 text-sm hover:bg-white/30"
@@ -81,16 +139,18 @@ export default function NewPostModal({ open, onClose }: { open: boolean; onClose
                             Fechar
                         </button>
                     </div>
+
                     <p className="mt-1 text-sm text-emerald-50/90">
                         Compartilhe conteúdo de saúde, nutrição e bem-estar 🌿
                     </p>
                 </div>
 
-                {/* Corpo */}
-                <form onSubmit={onSubmit} className="bg-white px-6 py-5">
+                <form onSubmit={onSubmit} className="flex-1 overflow-y-auto bg-white px-6 py-5">
                     <div className="space-y-4">
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-emerald-800">Título</label>
+                            <label className="mb-1 block text-sm font-medium text-emerald-800">
+                                Título
+                            </label>
                             <input
                                 className="w-full rounded-lg border border-emerald-200 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-400"
                                 placeholder="Ex.: Café da manhã proteico e prático"
@@ -102,7 +162,9 @@ export default function NewPostModal({ open, onClose }: { open: boolean; onClose
 
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
-                                <label className="mb-1 block text-sm font-medium text-emerald-800">Categoria</label>
+                                <label className="mb-1 block text-sm font-medium text-emerald-800">
+                                    Categoria
+                                </label>
                                 <select
                                     className="w-full rounded-lg border border-emerald-200 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-400"
                                     value={postType}
@@ -117,7 +179,9 @@ export default function NewPostModal({ open, onClose }: { open: boolean; onClose
                             </div>
 
                             <div>
-                                <label className="mb-1 block text-sm font-medium text-emerald-800">Imagem (URL)</label>
+                                <label className="mb-1 block text-sm font-medium text-emerald-800">
+                                    Imagem (URL)
+                                </label>
                                 <input
                                     className="w-full rounded-lg border border-emerald-200 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-400"
                                     placeholder="https://..."
@@ -127,9 +191,6 @@ export default function NewPostModal({ open, onClose }: { open: boolean; onClose
                                         if (e.target.value) setImageFile(null);
                                     }}
                                 />
-                                <p className="mt-1 text-xs text-emerald-700/70">
-                                    Se preencher a URL, o arquivo será ignorado.
-                                </p>
                             </div>
                         </div>
 
@@ -163,21 +224,17 @@ export default function NewPostModal({ open, onClose }: { open: boolean; onClose
                         )}
 
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-emerald-800">Conteúdo</label>
-                            <textarea
-                                className="min-h-[160px] w-full rounded-lg border border-emerald-200 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-400"
-                                placeholder="Escreva aqui o conteúdo do post…"
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                                required
-                            />
+                            <label className="mb-1 block text-sm font-medium text-emerald-800">
+                                Conteúdo
+                            </label>
+                            <RichTextEditor value={content} onChange={setContent} />
+
                             <div className="mt-1 text-right text-xs text-emerald-700/70">
-                                {content.trim().length} caracteres
+                                {content.replace(/<[^>]+>/g, "").trim().length} caracteres
                             </div>
                         </div>
                     </div>
 
-                    {/* Rodapé */}
                     <div className="mt-6 flex items-center justify-end gap-2">
                         <button
                             type="button"
@@ -186,12 +243,13 @@ export default function NewPostModal({ open, onClose }: { open: boolean; onClose
                         >
                             Cancelar
                         </button>
+
                         <button
                             type="submit"
                             disabled={isSubmitting}
                             className="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
                         >
-                            {isSubmitting ? "Salvando..." : "Salvar"}
+                            {isSubmitting ? "Salvando..." : mode === "edit" ? "Salvar alterações" : "Salvar"}
                         </button>
                     </div>
                 </form>

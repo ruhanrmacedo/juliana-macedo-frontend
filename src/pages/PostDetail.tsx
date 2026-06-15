@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import { Eye } from "lucide-react";
 import LikeButton from "@/components/LikeButton";
 import { getErrorMessage } from "@/lib/errors";
+import DOMPurify from "dompurify";
 
 interface Post {
     id: number;
@@ -77,8 +78,10 @@ const PostDetail = () => {
                             className="w-full h-[800px] object-cover rounded-lg"
                         />
 
-                        <header className="space-y-2">
-                            <h1 className="text-4xl font-bold font-heading">{post.title}</h1>
+                        <header className="space-y-4 border-b border-gray-100 pb-6">
+                            <h1 className="font-heading text-3xl font-extrabold leading-tight tracking-tight text-gray-950 md:text-5xl">
+                                {post.title}
+                            </h1>
                             <div className="text-gray-500 text-sm flex items-center gap-2">
                                 <span>Por {post.author.name}</span>
                                 <span>• {new Date(post.createdAt).toLocaleDateString()}</span>
@@ -89,9 +92,17 @@ const PostDetail = () => {
                             </div>
                         </header>
 
-                        <div className="text-lg leading-relaxed whitespace-pre-line">
-                            {post.content}
-                        </div>
+                        <div
+                            className="prose prose-lg max-w-none leading-relaxed
+                            [&_p]:mb-5
+                            [&_ul]:my-5 [&_ul]:list-disc [&_ul]:pl-8
+                            [&_ol]:my-5 [&_ol]:list-decimal [&_ol]:pl-8
+                            [&_li]:mb-2
+                            [&_blockquote]:border-l-4 [&_blockquote]:border-emerald-400 [&_blockquote]:pl-4 [&_blockquote]:italic"
+                            dangerouslySetInnerHTML={{
+                                __html: DOMPurify.sanitize(post.content),
+                            }}
+                        />
 
                         <CommentSection postId={post.id} />
                     </article>

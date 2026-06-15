@@ -23,6 +23,7 @@ import PatientFinance from "./pages/patients/sections/PatientFinance";
 import PatientMealPlan from "./pages/patients/sections/PatientMealPlan";
 import PatientsPhotos from "./pages/patients/sections/PatientPhotos";
 import PatientsHistory from "./pages/patients/sections/PatientsHistory";
+import AdminPosts from "./pages/AdminPosts";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/metrics" element={<UserMetrics />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/posts/:id" element={<PostDetail />} />
+            <Route path="/admin/posts" element={<AdminPosts />} />
             <Route path="/patients" element={<PatientsIndex />} />
             <Route path="/patients/:id" element={<PatientLayout />}>
               <Route index element={<PatientProfile />} />

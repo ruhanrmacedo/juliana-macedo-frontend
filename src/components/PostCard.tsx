@@ -1,4 +1,4 @@
-
+import { stripHtml } from "@/lib/text";
 import { Eye, Heart, MessageSquare } from "lucide-react";
 
 interface PostCardProps {
@@ -24,7 +24,9 @@ const PostCard = ({ image, title, excerpt, likes, comments, views, onReadMore }:
       </div>
       <div className="p-6 space-y-4">
         <h3 className="font-heading font-bold text-xl line-clamp-2">{title}</h3>
-        <p className="text-gray-600 line-clamp-3">{excerpt}</p>
+        <p className="text-gray-600 line-clamp-3">
+          {stripHtml(excerpt)}
+        </p>
         <div className="flex justify-between items-center">
           <div className="flex space-x-4 text-gray-500">
             <span className="flex items-center space-x-1">

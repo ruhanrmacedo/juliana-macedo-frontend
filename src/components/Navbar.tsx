@@ -39,20 +39,28 @@ const Navbar = () => {
             <Link to={`/?type=${PostTypeSlug[PostType.NOVIDADES]}`} className="nav-link">Novidades</Link>
 
             {!loading && isAuthenticated && user?.role === "admin" && (
-              <button 
-                onClick={() => navigate("/patients")}
-                className="px-3 py-1.5 rounded-md bg-primary text-white hover:opacity-90 transition"
-              >
-                Pacientes
-              </button>
-            )}
-            {!loading && isAuthenticated && user?.role === "admin" && (
-              <button
-                onClick={() => setShowNewPost(true)}
-                className="px-3 py-1.5 rounded-md bg-primary text-white hover:opacity-90 transition"
-              >
-                Novo Post
-              </button>
+              <>
+                <button
+                  onClick={() => navigate("/patients")}
+                  className="px-3 py-1.5 rounded-md border border-primary text-primary hover:bg-primary/5 transition"
+                >
+                  Pacientes
+                </button>
+
+                <button
+                  onClick={() => navigate("/admin/posts")}
+                  className="px-3 py-1.5 rounded-md border border-primary text-primary hover:bg-primary/5 transition"
+                >
+                  Gerenciar Posts
+                </button>
+
+                <button
+                  onClick={() => setShowNewPost(true)}
+                  className="px-3 py-1.5 rounded-md bg-primary text-white hover:opacity-90 transition"
+                >
+                  Novo Post
+                </button>
+              </>
             )}
 
             {loading ? null : (
@@ -86,10 +94,25 @@ const Navbar = () => {
         {isMenuOpen && (
           <div className="md:hidden absolute top-16 left-0 w-full bg-white border-t border-gray-100 animate-fadeIn z-50">
             <div className="container mx-auto px-4 py-4 space-y-4">
-              <a href="/" className="block nav-link py-2">Início</a>
-              <a href="/receitas" className="block nav-link py-2">Receitas</a>
-              <a href="/artigos" className="block nav-link py-2">Artigos</a>
-              <a href="/calculadoras" className="block nav-link py-2">Calculadoras</a>
+              <Link to="/" className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Início</Link>
+              <Link to={`/?type=${PostTypeSlug[PostType.RECEITA]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Receitas</Link>
+              <Link to={`/?type=${PostTypeSlug[PostType.SAUDE]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Saúde</Link>
+              <Link to={`/?type=${PostTypeSlug[PostType.ARTIGO]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Artigos</Link>
+              <Link to={`/?type=${PostTypeSlug[PostType.ALIMENTACAO]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Alimentação</Link>
+              <Link to={`/?type=${PostTypeSlug[PostType.DICAS]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Dicas</Link>
+              <Link to={`/?type=${PostTypeSlug[PostType.NOVIDADES]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Novidades</Link>
+
+              {isAuthenticated && user?.role === "admin" && (
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate("/patients");
+                  }}
+                  className="w-full text-left nav-link py-2 hover:bg-gray-100"
+                >
+                  Pacientes
+                </button>
+              )}
 
               {/* Novo Post no mobile */}
               {isAuthenticated && user?.role === "admin" && (
@@ -98,6 +121,17 @@ const Navbar = () => {
                   className="w-full text-left nav-link py-2 hover:bg-gray-100"
                 >
                   Novo Post
+                </button>
+              )}
+              {isAuthenticated && user?.role === "admin" && (
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate("/admin/posts");
+                  }}
+                  className="w-full text-left nav-link py-2 hover:bg-gray-100"
+                >
+                  Gerenciar Posts
                 </button>
               )}
 

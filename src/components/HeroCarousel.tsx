@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import api from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import { getTopViewedPosts } from "@/lib/posts";
+import { stripHtml } from "@/lib/text";
 
 interface Post {
   id: number;
@@ -57,7 +58,7 @@ const HeroCarousel = () => {
                   {post.title}
                 </h2>
                 <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-                  {post.excerpt}
+                  {stripHtml(post.excerpt)}
                 </p>
                 <button
                   className="btn-primary"
