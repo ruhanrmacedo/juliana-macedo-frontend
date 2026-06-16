@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
-import { nivelToBackendValue } from "@/lib/metrics";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import {
   normalizeAlturaToMeters,
   normalizePesoKg,
@@ -98,66 +99,73 @@ const UserMetrics = () => {
   if (loading) return <div className="p-4">Carregando...</div>;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-green-600 p-4">
-      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
-        {metrics && !editing ? (
-          <div className="space-y-2">
-            <h2 className="text-xl font-bold mb-4">Suas métricas</h2>
-            <p>Peso: {metrics.peso} kg</p>
-            <p>Altura: {metrics.altura} m</p>
-            <p>Idade: {metrics.idade} anos</p>
-            <p>Sexo: {metrics.sexo === "M" ? "Masculino" : "Feminino"}</p>
-            <p>Nível de Atividade: {metrics.nivelAtividade}</p>
-            <p>Gordura Corporal: {metrics.gorduraCorporal ?? "Não informado"}%</p>
-            <button onClick={startEdit} className="btn-primary mt-4 w-full">Editar</button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="peso" className="block text-sm font-medium mb-1">Peso (kg)</label>
-              <input id="peso" name="peso" type="text" value={formData.peso} onChange={handleChange} className="w-full p-2 border rounded-md" />
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+
+      <main className="flex-1 pt-16 bg-green-600 flex items-center justify-center p-4">
+        <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+          {metrics && !editing ? (
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold mb-4">Suas métricas</h2>
+              <p>Peso: {metrics.peso} kg</p>
+              <p>Altura: {metrics.altura} m</p>
+              <p>Idade: {metrics.idade} anos</p>
+              <p>Sexo: {metrics.sexo === "M" ? "Masculino" : "Feminino"}</p>
+              <p>Nível de Atividade: {metrics.nivelAtividade}</p>
+              <p>Gordura Corporal: {metrics.gorduraCorporal ?? "Não informado"}%</p>
+              <button onClick={startEdit} className="btn-primary mt-4 w-full">Editar</button>
             </div>
-            <div>
-              <label htmlFor="altura" className="block text-sm font-medium mb-1">Altura (m)</label>
-              <input id="altura" name="altura" type="text" value={formData.altura} onChange={handleChange} className="w-full p-2 border rounded-md" />
-            </div>
-            <div>
-              <label htmlFor="idade" className="block text-sm font-medium mb-1">Idade</label>
-              <input id="idade" name="idade" type="text" value={formData.idade} onChange={handleChange} className="w-full p-2 border rounded-md" />
-            </div>
-            <div>
-              <label htmlFor="sexo" className="block text-sm font-medium mb-1">Sexo</label>
-              <select id="sexo" name="sexo" value={formData.sexo} onChange={handleChange} className="w-full p-2 border rounded-md">
-                <option value="">Selecione</option>
-                <option value="M">Masculino</option>
-                <option value="F">Feminino</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="nivelAtividade" className="block text-sm font-medium mb-1">Nível de Atividade</label>
-              <select
-                id="nivelAtividade"
-                name="nivelAtividade"
-                value={formData.nivelAtividade}
-                onChange={handleChange}
-                className="w-full p-2 border rounded-md"
-              >
-                <option value="">Selecione</option>
-                <option value="Sedentário">Sedentário</option>
-                <option value="Levemente Ativo">Levemente Ativo</option>
-                <option value="Moderadamente Ativo">Moderadamente Ativo</option>
-                <option value="Altamente Ativo">Altamente Ativo</option>
-                <option value="Atleta / Muito Ativo">Atleta / Muito Ativo</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="gorduraCorporal" className="block text-sm font-medium mb-1">Gordura Corporal (%)</label>
-              <input id="gorduraCorporal" name="gorduraCorporal" type="text" value={formData.gorduraCorporal ?? ""} onChange={handleChange} className="w-full p-2 border rounded-md" />
-            </div>
-            <button type="submit" className="btn-primary w-full">Salvar</button>
-          </form>
-        )}
-      </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="peso" className="block text-sm font-medium mb-1">Peso (kg)</label>
+                <input id="peso" name="peso" type="text" value={formData.peso} onChange={handleChange} className="w-full p-2 border rounded-md" />
+              </div>
+              <div>
+                <label htmlFor="altura" className="block text-sm font-medium mb-1">Altura (m)</label>
+                <input id="altura" name="altura" type="text" value={formData.altura} onChange={handleChange} className="w-full p-2 border rounded-md" />
+              </div>
+              <div>
+                <label htmlFor="idade" className="block text-sm font-medium mb-1">Idade</label>
+                <input id="idade" name="idade" type="text" value={formData.idade} onChange={handleChange} className="w-full p-2 border rounded-md" />
+              </div>
+              <div>
+                <label htmlFor="sexo" className="block text-sm font-medium mb-1">Sexo</label>
+                <select id="sexo" name="sexo" value={formData.sexo} onChange={handleChange} className="w-full p-2 border rounded-md">
+                  <option value="">Selecione</option>
+                  <option value="M">Masculino</option>
+                  <option value="F">Feminino</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="nivelAtividade" className="block text-sm font-medium mb-1">Nível de Atividade</label>
+                <select
+                  id="nivelAtividade"
+                  name="nivelAtividade"
+                  value={formData.nivelAtividade}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="">Selecione</option>
+                  <option value="Sedentário">Sedentário</option>
+                  <option value="Levemente Ativo">Levemente Ativo</option>
+                  <option value="Moderadamente Ativo">Moderadamente Ativo</option>
+                  <option value="Altamente Ativo">Altamente Ativo</option>
+                  <option value="Atleta / Muito Ativo">Atleta / Muito Ativo</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="gorduraCorporal" className="block text-sm font-medium mb-1">Gordura Corporal (%)</label>
+                <input id="gorduraCorporal" name="gorduraCorporal" type="text" value={formData.gorduraCorporal ?? ""} onChange={handleChange} className="w-full p-2 border rounded-md" />
+              </div>
+              <button type="submit" className="btn-primary w-full">Salvar</button>
+            </form>
+          )}
+        </div>
+
+      </main>
+
+      <Footer />
     </div>
   );
 };
