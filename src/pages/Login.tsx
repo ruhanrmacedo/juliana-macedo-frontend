@@ -23,6 +23,7 @@ const Login = () => {
   const [emailRecuperado, setEmailRecuperado] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [emailRecuperacao, setEmailRecuperacao] = useState("");
+  const [isRequestingPasswordReset, setIsRequestingPasswordReset] = useState(false);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -97,7 +98,8 @@ const Login = () => {
   };
 
   const handleForgotPassword = async () => {
-    if (!emailRecuperacao) {
+    const normalizedEmail = emailRecuperacao.trim();
+    if (!normalizedEmail) {
       toast({
         title: "E-mail obrigatório",
         description: "Informe o e-mail para recuperar a senha.",
@@ -106,17 +108,22 @@ const Login = () => {
       return;
     }
 
-    if (!window.confirm("Uma nova senha será gerada e enviada para o e-mail informado. Deseja continuar?"))
-      return;
-
     try {
-      await api.post("/auth/forgot-password", { email: emailRecuperacao });
-      toast({ title: "Senha redefinida", description: "Uma nova senha foi enviada ao seu e-mail." });
+      setIsRequestingPasswordReset(true);
+      const response = await api.post("/auth/forgot-password", { email: normalizedEmail });
+      toast({
+        title: "Solicitação recebida",
+        description:
+          response.data.message ||
+          "Se o e-mail estiver cadastrado, você receberá as instruções em instantes.",
+      });
       setEmailRecuperacao("");
       setShowForgotPassword(false);
     } catch (err: unknown) {
-      const errorMsg = getErrorMessage(err) || "Erro ao recuperar senha";
+      const errorMsg = getErrorMessage(err) || "Não foi possível processar a solicitação agora.";
       toast({ title: "Erro", description: errorMsg, variant: "destructive" });
+    } finally {
+      setIsRequestingPasswordReset(false);
     }
   };
 
@@ -226,8 +233,12 @@ const Login = () => {
               />
             </div>
 
-            <button onClick={handleForgotPassword} className="w-full bg-red-600 text-white p-2 rounded-md font-semibold">
-              Enviar nova senha
+            <button
+              onClick={handleForgotPassword}
+              disabled={isRequestingPasswordReset}
+              className="w-full bg-red-600 text-white p-2 rounded-md font-semibold disabled:opacity-50"
+            >
+              {isRequestingPasswordReset ? "Enviando..." : "Enviar link de recuperação"}
             </button>
           </div>
         )}

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import ReCAPTCHA from "react-google-recaptcha";
 import { toast } from "@/components/ui/use-toast";
 import api from "@/lib/api";
+import { MIN_PASSWORD_LENGTH, PASSWORD_POLICY_MESSAGE } from "@/lib/passwordPolicy";
 
 const UserRegister = () => {
   const [name, setName] = useState("");
@@ -47,6 +48,15 @@ const UserRegister = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      toast({
+        variant: "destructive",
+        title: "Senha inválida",
+        description: PASSWORD_POLICY_MESSAGE,
+      });
+      return;
+    }
+
     if (password !== confirmPassword) {
       toast({
         variant: "destructive",
@@ -70,7 +80,7 @@ const UserRegister = () => {
     const cleanedCpf = cpf.replace(/\D/g, "");
 
     try {
-      const response = await api.post("http://localhost:3000/auth/register/full", {
+      const response = await api.post("/auth/register/full", {
         name,
         email,
         password,
@@ -157,6 +167,7 @@ const UserRegister = () => {
               className="w-full p-2 border rounded-md"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              minLength={MIN_PASSWORD_LENGTH}
               required
             />
           </div>
@@ -168,6 +179,7 @@ const UserRegister = () => {
               className="w-full p-2 border rounded-md"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              minLength={MIN_PASSWORD_LENGTH}
               required
             />
           </div>

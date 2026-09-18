@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import {
     Dialog,
     DialogContent,
@@ -10,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import api from "@/lib/api";
 import { getErrorMessage } from "@/lib/errors";
+import { MIN_PASSWORD_LENGTH, PASSWORD_POLICY_MESSAGE } from "@/lib/passwordPolicy";
 
 interface ModalChangePasswordProps {
     open: boolean;
@@ -26,6 +29,8 @@ export function ModalChangePassword({
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const { logout } = useAuth();
+    const navigate = useNavigate();
 
     const resetForm = () => {
         setCurrentPassword("");
@@ -50,8 +55,8 @@ export function ModalChangePassword({
                 return;
             }
 
-            if (newPassword.length < 6) {
-                alert("A nova senha deve ter pelo menos 6 caracteres.");
+            if (newPassword.length < MIN_PASSWORD_LENGTH) {
+                alert(PASSWORD_POLICY_MESSAGE);
                 return;
             }
 
@@ -63,9 +68,12 @@ export function ModalChangePassword({
                 confirmPassword,
             });
 
-            alert("Senha alterada com sucesso.");
-            handleClose();
+            alert("Senha alterada com sucesso. Faça login novamente.");
+            resetForm();
+            onClose();
             onSuccess?.();
+            logout();
+            navigate("/login", { replace: true });
         } catch (err: unknown) {
             console.error("Erro ao alterar senha:", getErrorMessage(err));
             alert(getErrorMessage(err));
@@ -94,6 +102,7 @@ export function ModalChangePassword({
                         placeholder="Nova senha"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
+                        minLength={MIN_PASSWORD_LENGTH}
                     />
 
                     <Input
@@ -101,6 +110,7 @@ export function ModalChangePassword({
                         placeholder="Confirmar nova senha"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
+                        minLength={MIN_PASSWORD_LENGTH}
                     />
                 </div>
 
