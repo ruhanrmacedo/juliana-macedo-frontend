@@ -25,6 +25,7 @@ import PatientMealPlan from "./pages/patients/sections/PatientMealPlan";
 import PatientsPhotos from "./pages/patients/sections/PatientPhotos";
 import PatientsHistory from "./pages/patients/sections/PatientsHistory";
 import AdminPosts from "./pages/AdminPosts";
+import RequireRole from "./components/auth/RequireRole";
 
 const queryClient = new QueryClient();
 
@@ -43,20 +44,22 @@ const App = () => (
             <Route path="/metrics" element={<UserMetrics />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/posts/:id" element={<PostDetail />} />
-            <Route path="/admin/posts" element={<AdminPosts />} />
-            <Route path="/patients" element={<PatientsIndex />} />
-            <Route path="/patients/:id" element={<PatientLayout />}>
-              <Route index element={<PatientProfile />} />
-              <Route path="profile" element={<PatientProfile />} />
-              <Route path="anamneses" element={<PatientAnamneses />} />
-              <Route path="metrics" element={<PatientMetrics />} />
-              <Route path="anthropometry" element={<PatientAnthropometry />} />
-              <Route path="calculators" element={<PatientCalculators />} />
-              <Route path="gestational" element={<PatientGestational />} />
-              <Route path="meal-plan" element={<PatientMealPlan />} />
-              <Route path="evolution-photos" element={<PatientsPhotos />} />
-              <Route path="history-evolution" element={<PatientsHistory />} />
-              <Route path="finance" element={<PatientFinance />} />
+            <Route element={<RequireRole allowedRoles={["admin"]} />}>
+              <Route path="/admin/posts" element={<AdminPosts />} />
+              <Route path="/patients" element={<PatientsIndex />} />
+              <Route path="/patients/:id" element={<PatientLayout />}>
+                <Route index element={<PatientProfile />} />
+                <Route path="profile" element={<PatientProfile />} />
+                <Route path="anamneses" element={<PatientAnamneses />} />
+                <Route path="metrics" element={<PatientMetrics />} />
+                <Route path="anthropometry" element={<PatientAnthropometry />} />
+                <Route path="calculators" element={<PatientCalculators />} />
+                <Route path="gestational" element={<PatientGestational />} />
+                <Route path="meal-plan" element={<PatientMealPlan />} />
+                <Route path="evolution-photos" element={<PatientsPhotos />} />
+                <Route path="history-evolution" element={<PatientsHistory />} />
+                <Route path="finance" element={<PatientFinance />} />
+              </Route>
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
