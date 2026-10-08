@@ -1,4 +1,4 @@
-﻿import { stripHtml } from "@/lib/text";
+import { stripHtml } from "@/lib/text";
 import { Eye, Heart, MessageSquare } from "lucide-react";
 
 interface PostCardProps {
@@ -9,7 +9,7 @@ interface PostCardProps {
   excerpt: string;
   likes: number;
   comments: number;
-  views: number; // opcional, caso queira exibir visualizaÃ§Ãµes
+  views: number; // opcional, caso queira exibir visualizações
   onReadMore?: () => void;
 }
 

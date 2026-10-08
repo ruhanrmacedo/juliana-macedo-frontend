@@ -1,4 +1,4 @@
-﻿import { AuthProvider } from "@/hooks/AuthContext";
+import { AuthProvider } from "@/hooks/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -36,7 +36,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AuthProvider> {/* ðŸ‘ˆ envolve aqui */}
+      <AuthProvider> {/* 👈 envolve aqui */}
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />

@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
@@ -112,12 +112,12 @@ export default function AdminPosts() {
                     <table className="w-full min-w-[900px] text-sm">
                         <thead className="bg-gray-50">
                             <tr className="text-left">
-                                <th className="px-4 py-3 font-semibold">TÃ­tulo</th>
+                                <th className="px-4 py-3 font-semibold">Título</th>
                                 <th className="px-4 py-3 font-semibold">Autor</th>
                                 <th className="px-4 py-3 font-semibold">Data</th>
                                 <th className="px-4 py-3 font-semibold">Status</th>
                                 <th className="px-4 py-3 font-semibold">Views</th>
-                                <th className="px-4 py-3 font-semibold text-right">AÃ§Ãµes</th>
+                                <th className="px-4 py-3 font-semibold text-right">Ações</th>
                             </tr>
                         </thead>
 
