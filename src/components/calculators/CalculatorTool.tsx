@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { Activity, Calculator, ChefHat, Droplets, Flame } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import api from "@/lib/api";
 import { toast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { getCalculatorUiState } from "@/lib/calculatorUx";
 import { getErrorMessage } from "@/lib/errors";
 import {
   calcularAguaMl,
@@ -29,6 +32,14 @@ type FormState = {
   idade: string;
   sexo: Sexo;
   nivel: NivelAtividadeFE;
+};
+
+type StoredMetrics = {
+  peso: number;
+  altura: number;
+  idade: number;
+  sexo: Sexo;
+  nivelAtividade: string;
 };
 
 type Result = { title: string; details: string[]; disclaimer: string };
@@ -76,7 +87,7 @@ function calculateEducationalResult(kind: CalculatorKind, form: FormState): Resu
     return {
       title: `TMB estimada: ${tmb.toFixed(0)} kcal`,
       details: ["Estimativa da energia utilizada pelo organismo em repouso."],
-      disclaimer: "Resultado educativo; não representa prescrição nutricional individual.",
+      disclaimer: "Esta é uma estimativa educativa e não representa prescrição nutricional individual.",
     };
   }
 
@@ -92,7 +103,7 @@ function calculateEducationalResult(kind: CalculatorKind, form: FormState): Resu
       return {
         title: `Gasto energético estimado: ${tdee.toFixed(0)} kcal/dia`,
         details: [`Fator de atividade utilizado: ${form.nivel}.`],
-        disclaimer: "Estimativa educativa; necessidades reais variam e pedem avaliação individualizada.",
+        disclaimer: "Esta é uma estimativa educativa; necessidades reais pedem avaliação individualizada.",
       };
     }
     const macros = calcularMacronutrientes(tdee);
@@ -111,7 +122,7 @@ function calculateEducationalResult(kind: CalculatorKind, form: FormState): Resu
   return {
     title: `Estimativa de água: ${(waterMl / 1000).toFixed(2)} L/dia`,
     details: [`Cálculo de compatibilidade atual: 45 ml por kg (${waterMl.toFixed(0)} ml).`],
-    disclaimer: "Estimativa educativa. Clima, rotina e condições individuais podem alterar a necessidade.",
+    disclaimer: "Esta é uma estimativa educativa. A necessidade individual pode variar.",
   };
 }
 
@@ -119,13 +130,34 @@ export default function CalculatorTool({ kind, patientId }: Props) {
   const config = configs[kind];
   const Icon = config.icon;
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuth();
   const isPatientMode = typeof patientId === "number";
-  const isAuthenticated = Boolean(localStorage.getItem("token"));
   const [form, setForm] = useState<FormState>(initialForm);
   const [result, setResult] = useState<Result | null>(null);
-  const [loadingMetrics, setLoadingMetrics] = useState(false);
   const [usingStoredMetrics, setUsingStoredMetrics] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const metricsQuery = useQuery({
+    queryKey: ["calculator-metrics", isPatientMode ? patientId : "me"],
+    enabled: isAuthenticated || isPatientMode,
+    staleTime: 60_000,
+    retry: false,
+    queryFn: async () => {
+      const response = await api.get<StoredMetrics[]>(
+        "/metrics",
+        isPatientMode ? { params: { userId: patientId } } : undefined,
+      );
+      return response.data?.[0] ?? null;
+    },
+  });
+
+  const ui = getCalculatorUiState({
+    isAuthenticated,
+    isPatientMode,
+    hasStoredMetrics: Boolean(metricsQuery.data),
+    hasResult: Boolean(result),
+  });
 
   const update = (field: keyof FormState, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -139,27 +171,19 @@ export default function CalculatorTool({ kind, patientId }: Props) {
     }
   };
 
-  const useStoredMetrics = async () => {
-    try {
-      setLoadingMetrics(true);
-      const response = await api.get("/metrics", isPatientMode ? { params: { userId: patientId } } : undefined);
-      const latest = response.data?.[0];
-      if (!latest) throw new Error(isPatientMode ? "Paciente sem métricas." : "Você ainda não possui métricas salvas.");
-      const next: FormState = {
-        peso: String(latest.peso),
-        altura: String(latest.altura),
-        idade: String(latest.idade),
-        sexo: latest.sexo as Sexo,
-        nivel: nivelFromBackend[String(latest.nivelAtividade)] ?? "Moderadamente Ativo",
-      };
-      setForm(next);
-      setUsingStoredMetrics(true);
-      calculate(next);
-    } catch (error: unknown) {
-      toast({ variant: "destructive", title: "Métricas indisponíveis", description: getErrorMessage(error) });
-    } finally {
-      setLoadingMetrics(false);
-    }
+  const useStoredMetrics = () => {
+    const latest = metricsQuery.data;
+    if (!latest) return;
+
+    const next: FormState = {
+      peso: String(latest.peso),
+      altura: String(latest.altura),
+      idade: String(latest.idade),
+      sexo: latest.sexo,
+      nivel: nivelFromBackend[String(latest.nivelAtividade)] ?? "Moderadamente Ativo",
+    };
+    setForm(next);
+    setUsingStoredMetrics(true);
   };
 
   const saveMetrics = async () => {
@@ -203,7 +227,10 @@ export default function CalculatorTool({ kind, patientId }: Props) {
         nivelAtividade: nivelToBackendValue[form.nivel],
         gorduraCorporal: null,
       });
-      toast({ title: "Métricas salvas", description: "O salvamento ocorreu somente após sua confirmação." });
+      await queryClient.invalidateQueries({
+        queryKey: ["calculator-metrics", isPatientMode ? patientId : "me"],
+      });
+      toast({ title: "Métricas salvas", description: "Os dados foram salvos após sua confirmação." });
     } catch (error: unknown) {
       toast({ variant: "destructive", title: "Não foi possível salvar", description: getErrorMessage(error) });
     } finally {
@@ -213,25 +240,23 @@ export default function CalculatorTool({ kind, patientId }: Props) {
 
   return (
     <section className="bg-white p-6 rounded-lg shadow-sm">
-      <div className="flex items-center space-x-2 mb-2">
+      <div className="flex items-center space-x-2 mb-5">
         <Icon className="text-primary" size={24} />
         <h3 className="font-heading font-bold text-xl">
           Calculadora de {config.label} {isPatientMode ? "(paciente)" : ""}
         </h3>
       </div>
-      <p className="mb-5 text-sm text-muted-foreground">
-        Use dados temporários para uma estimativa educativa. Calcular não salva nenhuma informação.
-      </p>
 
-      {(isAuthenticated || isPatientMode) && (
-        <button
-          type="button"
-          onClick={useStoredMetrics}
-          disabled={loadingMetrics}
-          className="mb-4 w-full border rounded-md p-2"
-        >
-          {loadingMetrics ? "Carregando..." : isPatientMode ? "Usar métricas do paciente" : "Usar minhas métricas"}
-        </button>
+      {ui.showUseStoredMetrics && (
+        <div className="mb-3 text-right">
+          <button
+            type="button"
+            onClick={useStoredMetrics}
+            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {isPatientMode ? "Usar métricas do paciente" : "Usar minhas métricas"}
+          </button>
+        </div>
       )}
 
       <form
@@ -310,8 +335,10 @@ export default function CalculatorTool({ kind, patientId }: Props) {
         <div className="mt-5 rounded-md border p-4 text-center space-y-2">
           <p className="font-semibold text-primary">{result.title}</p>
           {result.details.map((detail) => <p key={detail}>{detail}</p>)}
-          <p className="pt-2 text-xs text-muted-foreground">{result.disclaimer}</p>
-          {(isAuthenticated || isPatientMode) && (
+          {ui.showEducationalNotice && (
+            <p className="pt-2 text-xs text-muted-foreground">{result.disclaimer}</p>
+          )}
+          {ui.showSave && (
             <button type="button" onClick={saveMetrics} disabled={saving} className="mt-3 w-full border rounded-md p-2">
               {saving ? "Salvando..." : "Salvar estes dados"}
             </button>
