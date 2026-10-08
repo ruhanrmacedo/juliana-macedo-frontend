@@ -1,11 +1,12 @@
 import { useState } from "react";
 import api from "@/lib/api";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import ReCAPTCHA from "react-google-recaptcha";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import InputMask from "react-input-mask";
 import { getErrorMessage } from "@/lib/errors";
+import { getPostLoginDestination } from "@/lib/authFlows";
 
 type RecaptchaValue = string | null;
 type HtmlInputProps = React.InputHTMLAttributes<HTMLInputElement>;
@@ -15,6 +16,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
   const [captchaToken, setCaptchaToken] = useState<RecaptchaValue>(null);
   const { setUser } = useAuth();
   const [showRecoverEmail, setShowRecoverEmail] = useState(false);
@@ -47,11 +49,7 @@ const Login = () => {
       localStorage.setItem("user", JSON.stringify(response.data.user));
       setUser(response.data.user);
 
-      const check = await api.get("/metrics/check", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      navigate(check.data.hasMetrics ? "/" : "/metrics");
+      navigate(getPostLoginDestination(location.state), { replace: true });
     } catch (err: unknown) {
       const errorMsg = getErrorMessage(err) || "Erro ao fazer login";
       setError(errorMsg);

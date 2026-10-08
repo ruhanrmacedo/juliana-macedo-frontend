@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import api from "@/lib/api";
-import { get } from "http";
 import { getErrorMessage } from "@/lib/errors";
 
 type Patient = {
@@ -20,7 +19,6 @@ type Patient = {
 export default function PatientsIndex() {
     const [patients, setPatients] = useState<Patient[]>([]);
     const [q, setQ] = useState("");
-    const nav = useNavigate();
 
     useEffect(() => {
         (async () => {
@@ -48,13 +46,6 @@ export default function PatientsIndex() {
                 <div className="mb-6 flex items-center justify-between">
                     <h1 className="text-xl font-semibold">Seus pacientes</h1>
 
-                    {/* agora navega para /register */}
-                    <button
-                        onClick={() => nav("/register")}
-                        className="rounded-lg bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
-                    >
-                        adicionar paciente
-                    </button>
                 </div>
 
                 <div className="mb-4">

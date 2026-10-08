@@ -1,21 +1,25 @@
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import api from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { toast } from "@/components/ui/use-toast";
 import {
   normalizeAlturaToMeters,
   normalizePesoKg,
   normalizeIdade,
   normalizeGordura,
 } from "@/lib/metrics";
+import { getErrorMessage } from "@/lib/errors";
 
 interface Metrics {
+  id?: number;
   peso: number;
   altura: number;
   idade: number;
   sexo: string;
   nivelAtividade: string;
-  gorduraCorporal?: number;
+  gorduraCorporal?: number | null;
 }
 
 interface MetricsFormData {
@@ -24,76 +28,87 @@ interface MetricsFormData {
   idade: string;
   sexo: string;
   nivelAtividade: string;
-  gorduraCorporal?: string;
+  gorduraCorporal: string;
 }
 
+const emptyForm: MetricsFormData = {
+  peso: "",
+  altura: "",
+  idade: "",
+  sexo: "",
+  nivelAtividade: "",
+  gorduraCorporal: "",
+};
+
 const UserMetrics = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
-  const [formData, setFormData] = useState<MetricsFormData>({
-    peso: "",
-    altura: "",
-    idade: "",
-    sexo: "",
-    nivelAtividade: "",
-    gorduraCorporal: "",
-  });
+  const [formData, setFormData] = useState<MetricsFormData>(emptyForm);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const response = await api.get("/metrics")
-        if (response.data && response.data.length > 0) {
-          const data = response.data[0];
-          setMetrics(data);
+        const response = await api.get<Metrics[]>("/metrics");
+        const latest = response.data?.[0];
+        const prefill = (location.state as { prefill?: Partial<MetricsFormData> } | null)?.prefill;
+        if (latest) {
+          setMetrics(latest);
           setFormData({
-            peso: String(data.peso),
-            altura: String(data.altura),
-            idade: String(data.idade),
-            sexo: data.sexo,
-            nivelAtividade: data.nivelAtividade,
-            gorduraCorporal: data.gorduraCorporal ? String(data.gorduraCorporal) : "",
+            peso: prefill?.peso ?? String(latest.peso),
+            altura: prefill?.altura ?? String(latest.altura),
+            idade: prefill?.idade ?? String(latest.idade),
+            sexo: prefill?.sexo ?? latest.sexo,
+            nivelAtividade: prefill?.nivelAtividade ?? latest.nivelAtividade,
+            gorduraCorporal: latest.gorduraCorporal == null ? "" : String(latest.gorduraCorporal),
           });
+          if (prefill) setEditing(true);
+        } else {
+          if (prefill) setFormData((current) => ({ ...current, ...prefill }));
+          setEditing(true);
         }
-      } catch (error) {
-        console.error("Erro ao buscar métricas", error);
+      } catch (error: unknown) {
+        toast({
+          variant: "destructive",
+          title: "Não foi possível carregar as métricas",
+          description: getErrorMessage(error),
+        });
       } finally {
         setLoading(false);
       }
     };
-
     fetchMetrics();
-  }, []);
+  }, [location.state]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = event.target;
+    setFormData((current) => ({ ...current, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const payload = {
-      peso: normalizePesoKg(formData.peso),
-      altura: normalizeAlturaToMeters(formData.altura), // <- sempre metros
-      idade: normalizeIdade(formData.idade),
-      sexo: formData.sexo,
-      nivelAtividade: formData.nivelAtividade, // já está no valor do backend
-      gorduraCorporal: normalizeGordura(formData.gorduraCorporal),
-    };
-
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     try {
-      const response = await api.post("/metrics", payload);
+      const payload = {
+        peso: normalizePesoKg(formData.peso),
+        altura: normalizeAlturaToMeters(formData.altura),
+        idade: normalizeIdade(formData.idade),
+        sexo: formData.sexo,
+        nivelAtividade: formData.nivelAtividade,
+        gorduraCorporal: normalizeGordura(formData.gorduraCorporal),
+      };
+      const response = await api.post<Metrics>("/metrics", payload);
       setMetrics(response.data);
       setEditing(false);
-    } catch (error) {
-      console.error("Erro ao salvar métricas", error);
+      toast({ title: "Métricas salvas", description: "Seu histórico foi atualizado." });
+    } catch (error: unknown) {
+      toast({
+        variant: "destructive",
+        title: "Não foi possível salvar",
+        description: getErrorMessage(error),
+      });
     }
-  };
-
-  const startEdit = () => {
-    setEditing(true);
   };
 
   if (loading) return <div className="p-4">Carregando...</div>;
@@ -101,51 +116,45 @@ const UserMetrics = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-
-      <main className="flex-1 pt-16 bg-green-600 flex items-center justify-center p-4">
+      <main className="flex-1 pt-20 bg-green-600 flex items-center justify-center p-4">
         <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+          <h1 className="text-xl font-bold">Minhas métricas</h1>
+          <p className="mt-1 mb-5 text-sm text-muted-foreground">
+            Este recurso é opcional. Você pode usar o site normalmente sem preencher estes dados.
+          </p>
+
           {metrics && !editing ? (
             <div className="space-y-2">
-              <h2 className="text-xl font-bold mb-4">Suas métricas</h2>
               <p>Peso: {metrics.peso} kg</p>
               <p>Altura: {metrics.altura} m</p>
               <p>Idade: {metrics.idade} anos</p>
               <p>Sexo: {metrics.sexo === "M" ? "Masculino" : "Feminino"}</p>
-              <p>Nível de Atividade: {metrics.nivelAtividade}</p>
-              <p>Gordura Corporal: {metrics.gorduraCorporal ?? "Não informado"}%</p>
-              <button onClick={startEdit} className="btn-primary mt-4 w-full">Editar</button>
+              <p>Nível de atividade: {metrics.nivelAtividade}</p>
+              <p>Gordura corporal: {metrics.gorduraCorporal == null ? "Não informado" : `${metrics.gorduraCorporal}%`}</p>
+              <button onClick={() => setEditing(true)} className="btn-primary mt-4 w-full">
+                Atualizar métricas
+              </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="peso" className="block text-sm font-medium mb-1">Peso (kg)</label>
-                <input id="peso" name="peso" type="text" value={formData.peso} onChange={handleChange} className="w-full p-2 border rounded-md" />
-              </div>
-              <div>
-                <label htmlFor="altura" className="block text-sm font-medium mb-1">Altura (m)</label>
-                <input id="altura" name="altura" type="text" value={formData.altura} onChange={handleChange} className="w-full p-2 border rounded-md" />
-              </div>
-              <div>
-                <label htmlFor="idade" className="block text-sm font-medium mb-1">Idade</label>
-                <input id="idade" name="idade" type="text" value={formData.idade} onChange={handleChange} className="w-full p-2 border rounded-md" />
-              </div>
-              <div>
-                <label htmlFor="sexo" className="block text-sm font-medium mb-1">Sexo</label>
-                <select id="sexo" name="sexo" value={formData.sexo} onChange={handleChange} className="w-full p-2 border rounded-md">
+              <label className="block text-sm">Peso (kg)
+                <input name="peso" required value={formData.peso} onChange={handleChange} className="mt-1 w-full p-2 border rounded-md" />
+              </label>
+              <label className="block text-sm">Altura (m ou cm)
+                <input name="altura" required value={formData.altura} onChange={handleChange} className="mt-1 w-full p-2 border rounded-md" />
+              </label>
+              <label className="block text-sm">Idade
+                <input name="idade" required type="number" value={formData.idade} onChange={handleChange} className="mt-1 w-full p-2 border rounded-md" />
+              </label>
+              <label className="block text-sm">Sexo
+                <select name="sexo" required value={formData.sexo} onChange={handleChange} className="mt-1 w-full p-2 border rounded-md">
                   <option value="">Selecione</option>
                   <option value="M">Masculino</option>
                   <option value="F">Feminino</option>
                 </select>
-              </div>
-              <div>
-                <label htmlFor="nivelAtividade" className="block text-sm font-medium mb-1">Nível de Atividade</label>
-                <select
-                  id="nivelAtividade"
-                  name="nivelAtividade"
-                  value={formData.nivelAtividade}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded-md"
-                >
+              </label>
+              <label className="block text-sm">Nível de atividade
+                <select name="nivelAtividade" required value={formData.nivelAtividade} onChange={handleChange} className="mt-1 w-full p-2 border rounded-md">
                   <option value="">Selecione</option>
                   <option value="Sedentário">Sedentário</option>
                   <option value="Levemente Ativo">Levemente Ativo</option>
@@ -153,18 +162,19 @@ const UserMetrics = () => {
                   <option value="Altamente Ativo">Altamente Ativo</option>
                   <option value="Atleta / Muito Ativo">Atleta / Muito Ativo</option>
                 </select>
-              </div>
-              <div>
-                <label htmlFor="gorduraCorporal" className="block text-sm font-medium mb-1">Gordura Corporal (%)</label>
-                <input id="gorduraCorporal" name="gorduraCorporal" type="text" value={formData.gorduraCorporal ?? ""} onChange={handleChange} className="w-full p-2 border rounded-md" />
-              </div>
-              <button type="submit" className="btn-primary w-full">Salvar</button>
+              </label>
+              <label className="block text-sm">Gordura corporal (%) — opcional
+                <input name="gorduraCorporal" value={formData.gorduraCorporal} onChange={handleChange} className="mt-1 w-full p-2 border rounded-md" />
+              </label>
+              <button type="submit" className="btn-primary w-full">Salvar métricas</button>
             </form>
           )}
+
+          <button type="button" onClick={() => navigate("/")} className="mt-3 w-full border rounded-md p-2">
+            Agora não
+          </button>
         </div>
-
       </main>
-
       <Footer />
     </div>
   );

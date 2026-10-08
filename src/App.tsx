@@ -41,8 +41,10 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/register" element={<UserRegister />} />
-            <Route path="/metrics" element={<UserMetrics />} />
-            <Route path="/perfil" element={<Perfil />} />
+            <Route element={<RequireRole allowedRoles={["admin", "user"]} />}>
+              <Route path="/metrics" element={<UserMetrics />} />
+              <Route path="/perfil" element={<Perfil />} />
+            </Route>
             <Route path="/posts/:id" element={<PostDetail />} />
             <Route element={<RequireRole allowedRoles={["admin"]} />}>
               <Route path="/admin/posts" element={<AdminPosts />} />

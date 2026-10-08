@@ -78,39 +78,16 @@ export default function PatientAnthropometry() {
     [latest]
   );
 
-  // sincroniza UserMetrics quando houver dados úteis
-  const syncMetricsWithLatest = useCallback(async () => {
-    if (!patient?.id || !latest?.evaluation) return;
-    const e = latest.evaluation;
-    const pg = latest.results.find((r) => r.percentualGordura != null)?.percentualGordura;
-
-    const payload: Record<string, unknown> = {};
-    if (e.peso != null) payload.peso = e.peso;
-    if (e.altura != null) payload.altura = e.altura;
-    if (e.idade != null) payload.idade = e.idade;
-    if (e.sexo) payload.sexo = e.sexo;
-    if (pg != null) payload.gorduraCorporal = pg;
-
-    if (!Object.keys(payload).length) return;
-
-    try {
-      await api.post("/metrics", { ...payload, userId: patient.id });
-    } catch (e) {
-      console.warn("Sync de métricas ignorado:", e);
-    }
-  }, [patient?.id, latest]);
-
   const runAutopick = useCallback(async () => {
     if (!evalId) return;
     setComputing(true);
     try {
       await api.post(`/anthropometry/evaluations/${evalId}/compute`);
       await refetchLatest();
-      await syncMetricsWithLatest();
     } finally {
       setComputing(false);
     }
-  }, [evalId, refetchLatest, syncMetricsWithLatest]);
+  }, [evalId, refetchLatest]);
 
   const runMethod = useCallback(async () => {
     if (!evalId) return;
@@ -123,11 +100,10 @@ export default function PatientAnthropometry() {
     try {
       await api.post(`/anthropometry/evaluations/${evalId}/compute/${method}`);
       await refetchLatest();
-      await syncMetricsWithLatest();
     } finally {
       setComputing(false);
     }
-  }, [evalId, method, refetchLatest, syncMetricsWithLatest, latest?.results]);
+  }, [evalId, method, refetchLatest, latest?.results]);
 
   // descrição e sites do método selecionado (considera sexo da avaliação)
   const selectedLabel = useMemo(() => REQUIRED[method]?.label ?? method, [method]);

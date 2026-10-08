@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import api from "@/lib/api";
@@ -20,7 +21,8 @@ type EditArgs = {
 };
 
 const Perfil = () => {
-    const [user, setUser] = useState(null);
+    const navigate = useNavigate();
+    const [user, setUser] = useState<UserMe | null>(null);
     const [metrics, setMetrics] = useState<TMetrics[] | null>(null);
 
     const [modalOpen, setModalOpen] = useState(false);
@@ -98,14 +100,14 @@ const Perfil = () => {
                         </div>
 
                         <div>
-                            <strong>CPF:</strong> {user?.cpf}
+                            <strong>CPF:</strong> {user?.cpf ?? "Não informado"}
                             <Button
                                 variant="ghost"
                                 onClick={() =>
                                     user &&
                                     openModal({
                                         label: "CPF",
-                                        value: user.cpf,
+                                        value: user.cpf ?? "",
                                         endpoint: `/user`,
                                         fieldName: "cpf",
                                     })
@@ -117,15 +119,16 @@ const Perfil = () => {
 
                         <div>
                             <strong>Data de nascimento:</strong>{" "}
-                            {user?.dataNascimento &&
-                                new Date(user.dataNascimento).toLocaleDateString()}
+                            {user?.dataNascimento
+                                ? new Date(user.dataNascimento).toLocaleDateString()
+                                : "Não informado"}
                             <Button
                                 variant="ghost"
                                 onClick={() =>
                                     user &&
                                     openModal({
                                         label: "Data de nascimento",
-                                        value: user.dataNascimento,
+                                        value: user.dataNascimento ?? "",
                                         endpoint: `/user`,
                                         fieldName: "dataNascimento",
                                     })
@@ -301,6 +304,20 @@ const Perfil = () => {
                         </div>
                     </CardContent>
                 </Card>
+
+                {!lastMetric && metrics && (
+                    <Card>
+                        <CardContent className="space-y-3">
+                            <h2 className="text-xl font-bold">Métricas opcionais</h2>
+                            <p className="text-sm text-muted-foreground">
+                                Você ainda não adicionou métricas. Isso não limita sua conta nem a navegação no site.
+                            </p>
+                            <Button variant="outline" onClick={() => navigate("/metrics")}>
+                                Adicionar métricas
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {lastMetric && (
                     <Card>

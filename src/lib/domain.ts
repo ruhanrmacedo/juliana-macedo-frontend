@@ -17,8 +17,8 @@ export type UserMe = {
     name: string;
     email: string;
     role: UserRole;
-    cpf: string;
-    dataNascimento: string; // ISO
+    cpf: string | null;
+    dataNascimento: string | null; // ISO
     phones: UserPhone[];
     addresses: UserAddress[];
     emails: UserEmail[];
