@@ -24,7 +24,12 @@ import {
 } from "@/lib/metrics";
 
 export type CalculatorKind = "imc" | "tmb" | "tdee" | "macros" | "water";
-type Props = { kind: CalculatorKind; patientId?: number };
+export type CalculatorExpansionProps = {
+  expanded?: boolean;
+  onToggle?: () => void;
+};
+
+type Props = CalculatorExpansionProps & { kind: CalculatorKind; patientId?: number };
 
 type FormState = {
   peso: string;
@@ -53,11 +58,11 @@ const initialForm: FormState = {
 };
 
 const configs = {
-  imc: { label: "IMC", icon: Calculator, needsHeight: true, needsAge: false, needsActivity: false },
-  tmb: { label: "TMB", icon: Activity, needsHeight: true, needsAge: true, needsActivity: false },
-  tdee: { label: "TDEE", icon: Flame, needsHeight: true, needsAge: true, needsActivity: true },
-  macros: { label: "Macronutrientes", icon: ChefHat, needsHeight: true, needsAge: true, needsActivity: true },
-  water: { label: "Água", icon: Droplets, needsHeight: false, needsAge: false, needsActivity: false },
+  imc: { label: "IMC", viewLabel: "Ver IMC", icon: Calculator, needsHeight: true, needsAge: false, needsActivity: false },
+  tmb: { label: "TMB", viewLabel: "Ver TMB", icon: Activity, needsHeight: true, needsAge: true, needsActivity: false },
+  tdee: { label: "TDEE", viewLabel: "Ver TDEE", icon: Flame, needsHeight: true, needsAge: true, needsActivity: true },
+  macros: { label: "Macronutrientes", viewLabel: "Ver Macronutrientes", icon: ChefHat, needsHeight: true, needsAge: true, needsActivity: true },
+  water: { label: "Água", viewLabel: "Ver Água", icon: Droplets, needsHeight: false, needsAge: false, needsActivity: false },
 } as const;
 
 const activityOptions: NivelAtividadeFE[] = [
@@ -126,13 +131,19 @@ function calculateEducationalResult(kind: CalculatorKind, form: FormState): Resu
   };
 }
 
-export default function CalculatorTool({ kind, patientId }: Props) {
+export default function CalculatorTool({
+  kind,
+  patientId,
+  expanded = true,
+  onToggle,
+}: Props) {
   const config = configs[kind];
   const Icon = config.icon;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
   const isPatientMode = typeof patientId === "number";
+  const contentId = `calculator-${kind}-${patientId ?? "public"}-content`;
   const [form, setForm] = useState<FormState>(initialForm);
   const [result, setResult] = useState<Result | null>(null);
   const [usingStoredMetrics, setUsingStoredMetrics] = useState(false);
@@ -240,13 +251,40 @@ export default function CalculatorTool({ kind, patientId }: Props) {
 
   return (
     <section className="bg-white p-6 rounded-lg shadow-sm">
-      <div className="flex items-center space-x-2 mb-5">
-        <Icon className="text-primary" size={24} />
-        <h3 className="font-heading font-bold text-xl">
-          Calculadora de {config.label} {isPatientMode ? "(paciente)" : ""}
-        </h3>
+      <div className={`flex items-center justify-between gap-3 ${expanded ? "mb-5" : "mb-4"}`}>
+        <div className="flex items-center space-x-2">
+          <Icon className="text-primary" size={24} />
+          <h3 className="font-heading font-bold text-xl">
+            Calculadora de {config.label} {isPatientMode ? "(paciente)" : ""}
+          </h3>
+        </div>
+        {expanded && onToggle && (
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={true}
+            aria-controls={contentId}
+            className="shrink-0 text-sm text-muted-foreground underline-offset-4 hover:underline"
+          >
+            Recolher
+          </button>
+        )}
       </div>
 
+      {!expanded && (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={false}
+          aria-controls={contentId}
+          className="btn-primary w-full"
+        >
+          {config.viewLabel}
+        </button>
+      )}
+
+      {expanded && (
+        <div id={contentId}>
       {ui.showUseStoredMetrics && (
         <div className="mb-3 text-right">
           <button
@@ -343,6 +381,8 @@ export default function CalculatorTool({ kind, patientId }: Props) {
               {saving ? "Salvando..." : "Salvar estes dados"}
             </button>
           )}
+        </div>
+      )}
         </div>
       )}
     </section>

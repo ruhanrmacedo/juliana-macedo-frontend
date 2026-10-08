@@ -1,5 +1,14 @@
-import CalculatorTool from "./CalculatorTool";
+import CalculatorTool, { CalculatorExpansionProps } from "./CalculatorTool";
 
-export default function CalculatorTDEE({ patientId }: { patientId?: number }) {
-  return <CalculatorTool kind="tdee" patientId={patientId} />;
+type Props = CalculatorExpansionProps & { patientId?: number };
+
+export default function CalculatorTDEE({ patientId, expanded, onToggle }: Props) {
+  return (
+    <CalculatorTool
+      kind="tdee"
+      patientId={patientId}
+      expanded={expanded}
+      onToggle={onToggle}
+    />
+  );
 }

@@ -1,5 +1,14 @@
-import CalculatorTool from "./CalculatorTool";
+import CalculatorTool, { CalculatorExpansionProps } from "./CalculatorTool";
 
-export default function CalculatorWater({ patientId }: { patientId?: number }) {
-  return <CalculatorTool kind="water" patientId={patientId} />;
+type Props = CalculatorExpansionProps & { patientId?: number };
+
+export default function CalculatorWater({ patientId, expanded, onToggle }: Props) {
+  return (
+    <CalculatorTool
+      kind="water"
+      patientId={patientId}
+      expanded={expanded}
+      onToggle={onToggle}
+    />
+  );
 }

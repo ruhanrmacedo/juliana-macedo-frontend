@@ -1,5 +1,14 @@
-import CalculatorTool from "./CalculatorTool";
+import CalculatorTool, { CalculatorExpansionProps } from "./CalculatorTool";
 
-export default function CalculatorMacronutrients({ patientId }: { patientId?: number }) {
-  return <CalculatorTool kind="macros" patientId={patientId} />;
+type Props = CalculatorExpansionProps & { patientId?: number };
+
+export default function CalculatorMacronutrients({ patientId, expanded, onToggle }: Props) {
+  return (
+    <CalculatorTool
+      kind="macros"
+      patientId={patientId}
+      expanded={expanded}
+      onToggle={onToggle}
+    />
+  );
 }

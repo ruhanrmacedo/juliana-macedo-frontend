@@ -1,5 +1,14 @@
-import CalculatorTool from "./CalculatorTool";
+import CalculatorTool, { CalculatorExpansionProps } from "./CalculatorTool";
 
-export default function CalculatorTMB({ patientId }: { patientId?: number }) {
-  return <CalculatorTool kind="tmb" patientId={patientId} />;
+type Props = CalculatorExpansionProps & { patientId?: number };
+
+export default function CalculatorTMB({ patientId, expanded, onToggle }: Props) {
+  return (
+    <CalculatorTool
+      kind="tmb"
+      patientId={patientId}
+      expanded={expanded}
+      onToggle={onToggle}
+    />
+  );
 }

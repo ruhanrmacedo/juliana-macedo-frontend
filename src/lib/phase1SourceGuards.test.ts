@@ -31,6 +31,21 @@ describe("Fase 1 - garantias estruturais dos fluxos", () => {
     expect(calculator).toContain("ui.showSave");
   });
 
+  it("a Home controla um único card expandido por vez", () => {
+    const container = source("src/components/Calculadoras.tsx");
+    expect(container).toContain("INITIAL_OPEN_CALCULATOR");
+    expect(container).toContain("toggleOpenCalculator");
+    expect(container.match(/expanded={openCalculator ===/g)).toHaveLength(5);
+  });
+
+  it("os cards recolhidos possuem ação Ver e conteúdo acessível", () => {
+    const calculator = source("src/components/calculators/CalculatorTool.tsx");
+    expect(calculator).toContain("aria-expanded={false}");
+    expect(calculator).toContain("{config.viewLabel}");
+    expect(calculator).toContain("aria-controls={contentId}");
+    expect(calculator).toContain("{expanded && (");
+  });
+
   it("as cinco calculadoras continuam usando o fluxo público compartilhado", () => {
     for (const file of [
       "CalculatorIMC.tsx",

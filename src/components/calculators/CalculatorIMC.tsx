@@ -1,5 +1,14 @@
-import CalculatorTool from "./CalculatorTool";
+import CalculatorTool, { CalculatorExpansionProps } from "./CalculatorTool";
 
-export default function CalculatorIMC({ patientId }: { patientId?: number }) {
-  return <CalculatorTool kind="imc" patientId={patientId} />;
+type Props = CalculatorExpansionProps & { patientId?: number };
+
+export default function CalculatorIMC({ patientId, expanded, onToggle }: Props) {
+  return (
+    <CalculatorTool
+      kind="imc"
+      patientId={patientId}
+      expanded={expanded}
+      onToggle={onToggle}
+    />
+  );
 }
