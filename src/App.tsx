@@ -1,4 +1,4 @@
-import { AuthProvider } from "@/hooks/AuthContext";
+﻿import { AuthProvider } from "@/hooks/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +12,8 @@ import UserRegister from "./pages/UserRegister";
 import UserMetrics from "./pages/UserMetrics";
 import Perfil from "./pages/Perfil";
 import PostDetail from "./pages/PostDetail";
+import EditorialListing from "./pages/EditorialListing";
+import LegacyPostRedirect from "./pages/LegacyPostRedirect";
 import PatientsIndex from "./pages/patients/PatientsIndex";
 import PatientLayout from "./pages/patients/PatientLayout";
 import PatientProfile from "./pages/patients/sections/PatientProfile";
@@ -34,7 +36,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AuthProvider> {/* 👈 envolve aqui */}
+      <AuthProvider> {/* ðŸ‘ˆ envolve aqui */}
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
@@ -45,9 +47,16 @@ const App = () => (
               <Route path="/metrics" element={<UserMetrics />} />
               <Route path="/perfil" element={<Perfil />} />
             </Route>
-            <Route path="/posts/:id" element={<PostDetail />} />
+            <Route path="/conteudos" element={<EditorialListing />} />
+            <Route path="/conteudos/:slug" element={<PostDetail />} />
+            <Route path="/blog" element={<EditorialListing />} />
+            <Route path="/blog/:slug" element={<PostDetail />} />
+            <Route path="/receitas" element={<EditorialListing />} />
+            <Route path="/receitas/:slug" element={<PostDetail />} />
+            <Route path="/posts/:id" element={<LegacyPostRedirect />} />
             <Route element={<RequireRole allowedRoles={["admin"]} />}>
               <Route path="/admin/posts" element={<AdminPosts />} />
+              <Route path="/admin/posts/:id/preview" element={<PostDetail preview />} />
               <Route path="/patients" element={<PatientsIndex />} />
               <Route path="/patients/:id" element={<PatientLayout />}>
                 <Route index element={<PatientProfile />} />
@@ -72,3 +81,5 @@ const App = () => (
 );
 
 export default App;
+
+

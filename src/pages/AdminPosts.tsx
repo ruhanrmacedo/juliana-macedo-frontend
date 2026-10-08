@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
@@ -48,7 +48,7 @@ export default function AdminPosts() {
     }, [loading, isAdmin, navigate]);
 
     async function handleToggle(post: AdminPostItem) {
-        const confirmText = post.isActive
+        const confirmText = post.status === "PUBLISHED"
             ? "Deseja arquivar este post?"
             : "Deseja publicar novamente este post?";
 
@@ -112,12 +112,12 @@ export default function AdminPosts() {
                     <table className="w-full min-w-[900px] text-sm">
                         <thead className="bg-gray-50">
                             <tr className="text-left">
-                                <th className="px-4 py-3 font-semibold">Título</th>
+                                <th className="px-4 py-3 font-semibold">TÃ­tulo</th>
                                 <th className="px-4 py-3 font-semibold">Autor</th>
                                 <th className="px-4 py-3 font-semibold">Data</th>
                                 <th className="px-4 py-3 font-semibold">Status</th>
                                 <th className="px-4 py-3 font-semibold">Views</th>
-                                <th className="px-4 py-3 font-semibold text-right">Ações</th>
+                                <th className="px-4 py-3 font-semibold text-right">AÃ§Ãµes</th>
                             </tr>
                         </thead>
 
@@ -146,12 +146,12 @@ export default function AdminPosts() {
 
                                         <td className="px-4 py-3">
                                             <span
-                                                className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${post.isActive
+                                                className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${post.status === "PUBLISHED"
                                                         ? "bg-green-100 text-green-700"
                                                         : "bg-gray-200 text-gray-700"
                                                     }`}
                                             >
-                                                {post.isActive ? "Ativo" : "Arquivado"}
+                                                {post.status === "DRAFT" ? "Rascunho" : post.status === "PUBLISHED" ? "Publicado" : post.status === "SCHEDULED" ? "Agendado" : "Arquivado"}
                                             </span>
                                         </td>
 
@@ -170,7 +170,7 @@ export default function AdminPosts() {
                                                     onClick={() => handleToggle(post)}
                                                     className="rounded-md border px-3 py-1.5 hover:bg-gray-50"
                                                 >
-                                                    {post.isActive ? "Arquivar" : "Publicar novamente"}
+                                                    {post.status === "PUBLISHED" ? "Arquivar" : "Publicar"}
                                                 </button>
 
                                                 <button

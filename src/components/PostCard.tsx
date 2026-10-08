@@ -1,24 +1,25 @@
-import { stripHtml } from "@/lib/text";
+﻿import { stripHtml } from "@/lib/text";
 import { Eye, Heart, MessageSquare } from "lucide-react";
 
 interface PostCardProps {
   id: number;
   image: string;
+  imageAlt?: string;
   title: string;
   excerpt: string;
   likes: number;
   comments: number;
-  views: number; // opcional, caso queira exibir visualizações
+  views: number; // opcional, caso queira exibir visualizaÃ§Ãµes
   onReadMore?: () => void;
 }
 
-const PostCard = ({ image, title, excerpt, likes, comments, views, onReadMore }: PostCardProps) => {
+const PostCard = ({ image, imageAlt, title, excerpt, likes, comments, views, onReadMore }: PostCardProps) => {
   return (
     <div className="card overflow-hidden group">
       <div className="relative overflow-hidden aspect-video">
         <img
           src={image}
-          alt={title}
+          alt={imageAlt || title}
           className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
         />
       </div>
@@ -52,4 +53,6 @@ const PostCard = ({ image, title, excerpt, likes, comments, views, onReadMore }:
 };
 
 export default PostCard;
+
+
 

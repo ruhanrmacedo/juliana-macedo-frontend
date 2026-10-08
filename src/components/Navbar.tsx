@@ -1,4 +1,4 @@
-
+﻿
 import { useAuth } from "@/hooks/useAuth";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { useState } from "react";
@@ -30,11 +30,11 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="nav-link">Início</Link>
-            <Link to={`/?type=${PostTypeSlug[PostType.RECEITA]}`} className="nav-link">Receitas</Link>
-            <Link to={`/?type=${PostTypeSlug[PostType.SAUDE]}`} className="nav-link">Saúde</Link>
+            <Link to="/" className="nav-link">InÃ­cio</Link>
+            <Link to="/receitas" className="nav-link">Receitas</Link>
+            <Link to={`/?type=${PostTypeSlug[PostType.SAUDE]}`} className="nav-link">SaÃºde</Link>
             <Link to={`/?type=${PostTypeSlug[PostType.ARTIGO]}`} className="nav-link">Artigos</Link>
-            <Link to={`/?type=${PostTypeSlug[PostType.ALIMENTACAO]}`} className="nav-link">Alimentação</Link>
+            <Link to={`/?type=${PostTypeSlug[PostType.ALIMENTACAO]}`} className="nav-link">AlimentaÃ§Ã£o</Link>
             <Link to={`/?type=${PostTypeSlug[PostType.DICAS]}`} className="nav-link">Dicas</Link>
             <Link to={`/?type=${PostTypeSlug[PostType.NOVIDADES]}`} className="nav-link">Novidades</Link>
 
@@ -94,11 +94,11 @@ const Navbar = () => {
         {isMenuOpen && (
           <div className="md:hidden absolute top-16 left-0 w-full bg-white border-t border-gray-100 animate-fadeIn z-50">
             <div className="container mx-auto px-4 py-4 space-y-4">
-              <Link to="/" className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Início</Link>
-              <Link to={`/?type=${PostTypeSlug[PostType.RECEITA]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Receitas</Link>
-              <Link to={`/?type=${PostTypeSlug[PostType.SAUDE]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Saúde</Link>
+              <Link to="/" className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>InÃ­cio</Link>
+              <Link to="/receitas" className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Receitas</Link>
+              <Link to={`/?type=${PostTypeSlug[PostType.SAUDE]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>SaÃºde</Link>
               <Link to={`/?type=${PostTypeSlug[PostType.ARTIGO]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Artigos</Link>
-              <Link to={`/?type=${PostTypeSlug[PostType.ALIMENTACAO]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Alimentação</Link>
+              <Link to={`/?type=${PostTypeSlug[PostType.ALIMENTACAO]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>AlimentaÃ§Ã£o</Link>
               <Link to={`/?type=${PostTypeSlug[PostType.DICAS]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Dicas</Link>
               <Link to={`/?type=${PostTypeSlug[PostType.NOVIDADES]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Novidades</Link>
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import PostCard from "./PostCard";
 import api from "@/lib/api";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -9,6 +9,8 @@ interface Post {
   title: string;
   excerpt: string;
   imageUrl?: string;
+  imageAlt?: string;
+  canonicalPath: string;
   likes: number;
   commentsCount: number;
   views: number;
@@ -46,11 +48,12 @@ const RecentPosts = () => {
               id={post.id}
               title={post.title}
               excerpt={post.excerpt}
+              imageAlt={post.imageAlt || post.title}
               image={post.imageUrl ?? "https://placehold.co/800x400?text=Sem+Imagem"}
               likes={post.likes}
               comments={post.commentsCount}
               views={post.views}
-              onReadMore={() => navigate(`/posts/${post.id}`)}
+              onReadMore={() => navigate(post.canonicalPath)}
             />
           ))}
         </div>
@@ -60,3 +63,5 @@ const RecentPosts = () => {
 };
 
 export default RecentPosts;
+
+

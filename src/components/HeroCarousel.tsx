@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import api from "@/lib/api";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,8 @@ interface Post {
   title: string;
   excerpt: string;
   imageUrl?: string;
+  imageAlt?: string;
+  canonicalPath: string;
 }
 
 const HeroCarousel = () => {
@@ -48,7 +50,7 @@ const HeroCarousel = () => {
               src={
                 post.imageUrl ?? "https://placehold.co/1200x400?text=Sem+Imagem"
               }
-              alt={post.title}
+              alt={post.imageAlt || post.title}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/40" />
@@ -62,7 +64,7 @@ const HeroCarousel = () => {
                 </p>
                 <button
                   className="btn-primary"
-                  onClick={() => navigate(`/posts/${post.id}`)}
+                  onClick={() => navigate(post.canonicalPath)}
                 >
                   Ler mais
                 </button>
@@ -89,3 +91,5 @@ const HeroCarousel = () => {
 };
 
 export default HeroCarousel;
+
+
