@@ -1,4 +1,4 @@
-﻿import api from "@/lib/api";
+import api from "@/lib/api";
 
 export type EditorialChannel = "CONTENT" | "BLOG";
 export type ContentFormat = "ARTICLE" | "RECIPE";
@@ -18,21 +18,64 @@ export type EditorialPost = {
 export type AdminPostItem = EditorialPost & { technicalAuthor?: { id: number; name: string } | null; editedBy?: { id: number; name: string } | null };
 export type EditorialInput = Partial<EditorialPost> & { title: string; content: string; tagNames?: string[]; categoryId?: number | null; authorProfileId?: number; imageFile?: File | null };
 export type Taxonomy = { categories: Category[]; tags: Tag[]; authors: Array<AuthorProfile & { name?: never }> };
+export type EditorialListingKind = "conteudos" | "blog" | "receitas";
+export type PublicPostFilters = {
+  channel?: EditorialChannel;
+  format?: ContentFormat;
+  category?: string;
+  tag?: string;
+};
+export type PaginatedPostsResponse = {
+  posts: EditorialPost[];
+  total: number;
+  page: number;
+  limit: number;
+};
 
 export function canonicalPostPath(post: Pick<EditorialPost, "slug" | "channel" | "format">) {
   if (post.channel === "BLOG") return `/blog/${post.slug}`;
   if (post.format === "RECIPE") return `/receitas/${post.slug}`;
   return `/conteudos/${post.slug}`;
 }
-export async function getPaginatedPosts(page = 1, pageSize = 6, typeSlug?: string, filters: { channel?: EditorialChannel; format?: ContentFormat; category?: string; tag?: string } = {}) {
+export function getEditorialListingFilters(
+  kind: EditorialListingKind,
+  category?: string,
+): PublicPostFilters {
+  const sectionFilters: PublicPostFilters =
+    kind === "blog"
+      ? { channel: "BLOG" }
+      : kind === "receitas"
+        ? { channel: "CONTENT", format: "RECIPE" }
+        : { channel: "CONTENT", format: "ARTICLE" };
+
+  return category && kind === "conteudos"
+    ? { ...sectionFilters, category }
+    : sectionFilters;
+}
+
+export async function getPaginatedPosts(
+  page = 1,
+  pageSize = 6,
+  typeSlug?: string,
+  filters: PublicPostFilters = {},
+) {
   const qs = new URLSearchParams({ page: String(page), limit: String(pageSize) });
   if (typeSlug) qs.set("type", typeSlug);
   Object.entries(filters).forEach(([key, value]) => value && qs.set(key, value));
-  return (await api.get(`/post/postspaginated?${qs}`)).data;
+  return (await api.get(`/post/postspaginated?${qs}`)).data as PaginatedPostsResponse;
 }
-export async function getEditorialListing(kind: "conteudos" | "blog" | "receitas", page = 1) {
-  const filters = kind === "blog" ? { channel: "BLOG" as const } : kind === "receitas" ? { channel: "CONTENT" as const, format: "RECIPE" as const } : { channel: "CONTENT" as const, format: "ARTICLE" as const };
-  return getPaginatedPosts(page, 12, undefined, filters);
+
+export async function getEditorialListing(
+  kind: EditorialListingKind,
+  page = 1,
+  category?: string,
+) {
+  return getPaginatedPosts(
+    page,
+    12,
+    undefined,
+    getEditorialListingFilters(kind, category),
+  );
 }
 export const getTopViewedPosts = async (limit = 3) => (await api.get("/post/top", { params: { limit } })).data;
 export const getAdminPosts = async () => (await api.get("/post/admin")).data as AdminPostItem[];

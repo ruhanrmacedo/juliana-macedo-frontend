@@ -1,154 +1,394 @@
 
-import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Menu, X } from "lucide-react";
-import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import NewPostModal from "@/components/NewPostModal";
-import { PostType, PostTypeSlug } from "@/lib/postTypes";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  EDITORIAL_CATEGORIES,
+  editorialCategoryPath,
+} from "@/lib/editorialNavigation";
+
+const publicLinkClass =
+  "nav-link rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, logout, isAuthenticated, loading } = useAuth();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isContentMenuOpen, setIsContentMenuOpen] = useState(false);
+  const [isMobileContentOpen, setIsMobileContentOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [showNewPost, setShowNewPost] = useState(false);
+  const contentMenuRef = useRef<HTMLDivElement>(null);
+  const contentButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const { user, logout, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const closeOnOutsideInteraction = (event: PointerEvent) => {
+      if (
+        contentMenuRef.current &&
+        !contentMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsContentMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsideInteraction);
+    return () =>
+      document.removeEventListener("pointerdown", closeOnOutsideInteraction);
+  }, []);
+
+  const closePublicNavigation = () => {
+    setIsContentMenuOpen(false);
+    setIsMobileContentOpen(false);
+    setIsMenuOpen(false);
+  };
 
   const handleLogout = () => {
     logout();
+    setIsUserMenuOpen(false);
+    closePublicNavigation();
     navigate("/");
   };
 
   return (
-    <nav className="bg-white shadow-sm fixed w-full top-0 z-50">
+    <nav
+      aria-label="Navegação principal"
+      className="fixed top-0 z-50 w-full bg-white shadow-sm"
+    >
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
-          <a href="/" className="flex items-center space-x-2">
-            <h1 className="text-xl font-heading font-bold text-primary">
+        <div className="flex h-16 items-center justify-between">
+          <Link
+            to="/"
+            onClick={closePublicNavigation}
+            className="flex items-center space-x-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            <h1 className="font-heading text-xl font-bold text-primary">
               Juliana Macedo
             </h1>
-          </a>
+          </Link>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="nav-link">Início</Link>
-            <Link to="/receitas" className="nav-link">Receitas</Link>
-            <Link to={`/?type=${PostTypeSlug[PostType.SAUDE]}`} className="nav-link">Saúde</Link>
-            <Link to={`/?type=${PostTypeSlug[PostType.ARTIGO]}`} className="nav-link">Artigos</Link>
-            <Link to={`/?type=${PostTypeSlug[PostType.ALIMENTACAO]}`} className="nav-link">Alimentação</Link>
-            <Link to={`/?type=${PostTypeSlug[PostType.DICAS]}`} className="nav-link">Dicas</Link>
-            <Link to={`/?type=${PostTypeSlug[PostType.NOVIDADES]}`} className="nav-link">Novidades</Link>
+          <div className="hidden items-center gap-6 md:flex">
+            <Link to="/" className={publicLinkClass}>
+              Início
+            </Link>
+
+            <div
+              ref={contentMenuRef}
+              className="relative"
+              onKeyDown={(event) => {
+                if (event.key === "Escape" && isContentMenuOpen) {
+                  event.preventDefault();
+                  setIsContentMenuOpen(false);
+                  contentButtonRef.current?.focus();
+                }
+              }}
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                  setIsContentMenuOpen(false);
+                }
+              }}
+            >
+              <button
+                ref={contentButtonRef}
+                type="button"
+                aria-expanded={isContentMenuOpen}
+                aria-controls="desktop-content-menu"
+                className={`${publicLinkClass} flex items-center gap-1`}
+                onClick={() => setIsContentMenuOpen((open) => !open)}
+              >
+                Conteúdos
+                <ChevronDown
+                  size={16}
+                  aria-hidden="true"
+                  className={`transition-transform ${isContentMenuOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {isContentMenuOpen && (
+                <div
+                  id="desktop-content-menu"
+                  aria-label="Conteúdos"
+                  className="absolute left-0 mt-2 w-64 overflow-hidden rounded-lg border border-gray-100 bg-white py-2 shadow-lg"
+                >
+                  <Link
+                    to="/conteudos"
+                    onClick={() => setIsContentMenuOpen(false)}
+                    className="block px-4 py-2 font-medium text-primary hover:bg-primary/5 focus-visible:bg-primary/5 focus-visible:outline-none"
+                  >
+                    Todos os conteúdos
+                  </Link>
+                  {EDITORIAL_CATEGORIES.map((category) => (
+                    <Link
+                      key={category.slug}
+                      to={editorialCategoryPath(category.slug)}
+                      onClick={() => setIsContentMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-primary/5 focus-visible:bg-primary/5 focus-visible:outline-none"
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+                  <div className="mt-2 border-t border-gray-100 pt-2">
+                    <Link
+                      to="/receitas"
+                      onClick={() => setIsContentMenuOpen(false)}
+                      className="block px-4 py-2 font-medium text-primary hover:bg-primary/5 focus-visible:bg-primary/5 focus-visible:outline-none"
+                    >
+                      Receitas
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Link to="/blog" className={publicLinkClass}>
+              Blog
+            </Link>
+            <Link to="/#ferramentas" className={publicLinkClass}>
+              Ferramentas
+            </Link>
 
             {!loading && isAuthenticated && user?.role === "admin" && (
               <>
                 <button
+                  type="button"
                   onClick={() => navigate("/patients")}
-                  className="px-3 py-1.5 rounded-md border border-primary text-primary hover:bg-primary/5 transition"
+                  className="rounded-md border border-primary px-3 py-1.5 text-primary transition hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
                   Pacientes
                 </button>
-
                 <button
+                  type="button"
                   onClick={() => navigate("/admin/posts")}
-                  className="px-3 py-1.5 rounded-md border border-primary text-primary hover:bg-primary/5 transition"
+                  className="rounded-md border border-primary px-3 py-1.5 text-primary transition hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
                   Gerenciar Posts
                 </button>
-
                 <button
+                  type="button"
                   onClick={() => setShowNewPost(true)}
-                  className="px-3 py-1.5 rounded-md bg-primary text-white hover:opacity-90 transition"
+                  className="rounded-md bg-primary px-3 py-1.5 text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
                   Novo Post
                 </button>
               </>
             )}
 
-            {loading ? null : (
-              isAuthenticated && user?.name ? (
-                <div className="relative">
-                  <button
-                    className="flex items-center gap-2"
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
+            {loading ? null : isAuthenticated && user?.name ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded={isUserMenuOpen}
+                  className="flex items-center gap-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  onClick={() => setIsUserMenuOpen((open) => !open)}
+                >
+                  {user.name}
+                  <ChevronDown size={18} aria-hidden="true" />
+                </button>
+                {isUserMenuOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 mt-2 rounded border bg-white shadow-md"
                   >
-                    {user.name} <ChevronDown size={18} />
-                  </button>
-                  {dropdownOpen && (
-                    <div className="absolute right-0 mt-2 bg-white shadow-md border rounded">
-                      <Link to="/perfil" className="block px-4 py-2 hover:bg-gray-100">Perfil</Link>
-                      <button onClick={handleLogout} className="block px-4 py-2 w-full text-left hover:bg-gray-100">Logout</button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <Link to="/login" className="btn-primary">Login</Link>
-              )
+                    <Link
+                      role="menuitem"
+                      to="/perfil"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="block px-4 py-2 hover:bg-gray-100 focus-visible:bg-gray-100 focus-visible:outline-none"
+                    >
+                      Perfil
+                    </Link>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleLogout}
+                      className="block w-full px-4 py-2 text-left hover:bg-gray-100 focus-visible:bg-gray-100 focus-visible:outline-none"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link to="/login" className="btn-primary">
+                Login
+              </Link>
             )}
           </div>
 
-          <button className="md:hidden p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          <button
+            ref={mobileMenuButtonRef}
+            type="button"
+            aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-navigation"
+            className="rounded-sm p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:hidden"
+            onClick={() => setIsMenuOpen((open) => !open)}
+          >
+            {isMenuOpen ? (
+              <X size={24} aria-hidden="true" />
+            ) : (
+              <Menu size={24} aria-hidden="true" />
+            )}
           </button>
         </div>
 
-        {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden absolute top-16 left-0 w-full bg-white border-t border-gray-100 animate-fadeIn z-50">
-            <div className="container mx-auto px-4 py-4 space-y-4">
-              <Link to="/" className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Início</Link>
-              <Link to="/receitas" className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Receitas</Link>
-              <Link to={`/?type=${PostTypeSlug[PostType.SAUDE]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Saúde</Link>
-              <Link to={`/?type=${PostTypeSlug[PostType.ARTIGO]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Artigos</Link>
-              <Link to={`/?type=${PostTypeSlug[PostType.ALIMENTACAO]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Alimentação</Link>
-              <Link to={`/?type=${PostTypeSlug[PostType.DICAS]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Dicas</Link>
-              <Link to={`/?type=${PostTypeSlug[PostType.NOVIDADES]}`} className="block nav-link py-2" onClick={() => setIsMenuOpen(false)}>Novidades</Link>
+          <div
+            id="mobile-navigation"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                closePublicNavigation();
+                mobileMenuButtonRef.current?.focus();
+              }
+            }}
+            className="absolute left-0 top-16 z-50 w-full animate-fadeIn border-t border-gray-100 bg-white md:hidden"
+          >
+            <div className="container mx-auto space-y-2 px-4 py-4">
+              <Link
+                to="/"
+                className={`block py-2 ${publicLinkClass}`}
+                onClick={closePublicNavigation}
+              >
+                Início
+              </Link>
 
-              {isAuthenticated && user?.role === "admin" && (
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    navigate("/patients");
-                  }}
-                  className="w-full text-left nav-link py-2 hover:bg-gray-100"
+              <button
+                type="button"
+                aria-expanded={isMobileContentOpen}
+                aria-controls="mobile-content-menu"
+                className={`flex w-full items-center justify-between py-2 text-left ${publicLinkClass}`}
+                onClick={() => setIsMobileContentOpen((open) => !open)}
+              >
+                Conteúdos
+                <ChevronDown
+                  size={18}
+                  aria-hidden="true"
+                  className={`transition-transform ${isMobileContentOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {isMobileContentOpen && (
+                <div
+                  id="mobile-content-menu"
+                  className="space-y-1 border-l-2 border-primary/20 pl-4"
                 >
-                  Pacientes
-                </button>
+                  <Link
+                    to="/conteudos"
+                    className={`block py-2 ${publicLinkClass}`}
+                    onClick={closePublicNavigation}
+                  >
+                    Todos os conteúdos
+                  </Link>
+                  {EDITORIAL_CATEGORIES.map((category) => (
+                    <Link
+                      key={category.slug}
+                      to={editorialCategoryPath(category.slug)}
+                      className={`block py-2 text-sm ${publicLinkClass}`}
+                      onClick={closePublicNavigation}
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+                  <Link
+                    to="/receitas"
+                    className={`block py-2 font-medium ${publicLinkClass}`}
+                    onClick={closePublicNavigation}
+                  >
+                    Receitas
+                  </Link>
+                </div>
               )}
 
-              {/* Novo Post no mobile */}
+              <Link
+                to="/blog"
+                className={`block py-2 ${publicLinkClass}`}
+                onClick={closePublicNavigation}
+              >
+                Blog
+              </Link>
+              <Link
+                to="/#ferramentas"
+                className={`block py-2 ${publicLinkClass}`}
+                onClick={closePublicNavigation}
+              >
+                Ferramentas
+              </Link>
+
               {isAuthenticated && user?.role === "admin" && (
-                <button
-                  onClick={() => { setIsMenuOpen(false); setShowNewPost(true); }}
-                  className="w-full text-left nav-link py-2 hover:bg-gray-100"
-                >
-                  Novo Post
-                </button>
-              )}
-              {isAuthenticated && user?.role === "admin" && (
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    navigate("/admin/posts");
-                  }}
-                  className="w-full text-left nav-link py-2 hover:bg-gray-100"
-                >
-                  Gerenciar Posts
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closePublicNavigation();
+                      navigate("/patients");
+                    }}
+                    className="w-full py-2 text-left nav-link hover:bg-gray-100"
+                  >
+                    Pacientes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closePublicNavigation();
+                      setShowNewPost(true);
+                    }}
+                    className="w-full py-2 text-left nav-link hover:bg-gray-100"
+                  >
+                    Novo Post
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closePublicNavigation();
+                      navigate("/admin/posts");
+                    }}
+                    className="w-full py-2 text-left nav-link hover:bg-gray-100"
+                  >
+                    Gerenciar Posts
+                  </button>
+                </>
               )}
 
-              {isAuthenticated && <a href="/perfil" className="block nav-link py-2">Perfil</a>}
+              {isAuthenticated && (
+                <Link
+                  to="/perfil"
+                  className={`block py-2 ${publicLinkClass}`}
+                  onClick={closePublicNavigation}
+                >
+                  Perfil
+                </Link>
+              )}
               {!isAuthenticated ? (
-                <Link to="/login" className="btn-primary w-full">Login</Link>
+                <Link
+                  to="/login"
+                  className="btn-primary block w-full"
+                  onClick={closePublicNavigation}
+                >
+                  Login
+                </Link>
               ) : (
-                <button onClick={handleLogout} className="w-full text-left nav-link py-2 hover:bg-gray-100">Logout</button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full py-2 text-left nav-link hover:bg-gray-100"
+                >
+                  Logout
+                </button>
               )}
             </div>
           </div>
         )}
       </div>
 
-      {/* Modal Novo Post */}
       {showNewPost && (
-        <NewPostModal open={showNewPost} onClose={() => setShowNewPost(false)} />
+        <NewPostModal
+          open={showNewPost}
+          onClose={() => setShowNewPost(false)}
+        />
       )}
     </nav>
   );

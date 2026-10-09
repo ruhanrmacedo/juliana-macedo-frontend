@@ -47,7 +47,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
         editorProps: {
             attributes: {
                 class:
-                    "min-h-[280px] rounded-b-lg border border-t-0 border-emerald-200 px-4 py-4 outline-none prose prose-sm max-w-none focus:ring-2 focus:ring-emerald-400 [&_p]:mb-4 [&_ul]:list-disc [&_ul]:pl-8 [&_ol]:list-decimal [&_ol]:pl-8 [&_li]:mb-1",
+                    "min-h-[280px] rounded-b-lg border border-t-0 border-emerald-200 px-4 py-4 outline-none prose prose-base md:prose-lg prose-emerald max-w-none font-normal break-words focus:ring-2 focus:ring-emerald-400",
             },
         },
         onUpdate({ editor }) {
