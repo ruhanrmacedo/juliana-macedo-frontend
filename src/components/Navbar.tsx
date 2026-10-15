@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Menu, X } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import NewPostModal from "@/components/NewPostModal";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -64,15 +64,22 @@ const Navbar = () => {
             onClick={closePublicNavigation}
             className="flex items-center space-x-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
-            <h1 className="font-heading text-xl font-bold text-primary">
+            <span className="font-heading text-xl font-bold text-primary">
               Juliana Macedo
-            </h1>
+            </span>
           </Link>
 
-          <div className="hidden items-center gap-6 md:flex">
+          <div className="hidden items-center gap-4 lg:gap-6 md:flex">
             <Link to="/" className={publicLinkClass}>
               Início
             </Link>
+            <NavLink
+              to="/juliana"
+              onClick={closePublicNavigation}
+              className={({ isActive }) => `${publicLinkClass} ${isActive ? "font-medium text-primary" : ""}`}
+            >
+              Sobre Juliana
+            </NavLink>
 
             <div
               ref={contentMenuRef}
@@ -255,6 +262,13 @@ const Navbar = () => {
               >
                 Início
               </Link>
+              <NavLink
+                to="/juliana"
+                className={({ isActive }) => `block py-2 ${publicLinkClass} ${isActive ? "font-medium text-primary" : ""}`}
+                onClick={closePublicNavigation}
+              >
+                Sobre Juliana
+              </NavLink>
 
               <button
                 type="button"

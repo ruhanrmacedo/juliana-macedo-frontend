@@ -1,0 +1,138 @@
+/* Estilos restritos à página profissional; não redefinem tema ou componentes globais. */
+.juliana-page { --jp-paper: #faf8f1; --jp-ink: #303d2d; --jp-muted: #5d6555; --jp-olive: #526142; --jp-line: #d9ddcf; background: var(--jp-paper); color: var(--jp-ink); }
+.juliana-page .jp-main { padding-top: 64px; outline: none; }
+.juliana-page .jp-container { width: min(1120px, calc(100% - 96px)); margin-inline: auto; }
+.juliana-page .jp-preview-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 29px 10px; font-size: 11px; }
+.juliana-page .jp-breadcrumb { display: flex; align-items: center; gap: 14px; color: var(--jp-muted); }
+.juliana-page .jp-preview-badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px solid var(--jp-line); border-radius: 999px; background: #f1f2e9; color: #46543a; font-size: 10px; letter-spacing: .02em; }
+.juliana-page .jp-preview-badge > span { width: 5px; height: 5px; border-radius: 50%; background: #68774e; }
+.juliana-page .jp-hero { display: grid; grid-template-columns: 1.15fr 1fr; align-items: center; gap: 76px; padding-block: 44px 68px; }
+.juliana-page .jp-eyebrow { display: flex; align-items: center; gap: 9px; color: var(--jp-olive); font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; line-height: 1.8; }
+.juliana-page .jp-display { margin: 23px 0 24px; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(64px, 7.2vw, 100px); font-weight: 400; letter-spacing: -.055em; line-height: .98; }
+.juliana-page .jp-display em { font-weight: 400; color: var(--jp-olive); }
+.juliana-page .jp-title-dot { color: #a68b5d; }
+.juliana-page .jp-hero-headline { max-width: 390px; margin-bottom: 14px; font-family: Georgia, serif; font-size: 24px; line-height: 1.45; }
+.juliana-page .jp-hero-intro { max-width: 370px; color: var(--jp-muted); font-size: 14px; line-height: 1.9; }
+.juliana-page .jp-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 23px; margin-top: 30px; }
+.juliana-page .jp-button { display: inline-flex; justify-content: center; align-items: center; gap: 12px; min-height: 48px; padding: 13px 21px; border-radius: 4px; background: var(--jp-olive); color: #fffdf5; font-size: 12px; font-weight: 500; transition: background .2s, transform .2s; }
+.juliana-page .jp-button:not(:disabled):hover { background: #394a2e; transform: translateY(-2px); }
+.juliana-page .jp-button:disabled { cursor: not-allowed; background: #657055; color: #fffdf5; }
+.juliana-page .jp-text-link { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; font-size: 12px; border-bottom: 1px solid #8b967b; transition: color .2s; }
+.juliana-page .jp-text-link:hover { color: #1e3621; }
+.juliana-page .jp-hero-note { margin-top: 22px; max-width: 370px; color: var(--jp-muted); font-size: 10px; line-height: 1.8; }
+.juliana-page .jp-portrait { position: relative; margin: 0; width: 100%; max-width: 440px; justify-self: end; }
+.juliana-page .jp-portrait-frame { position: relative; overflow: hidden; border-radius: 200px 200px 6px 6px; background: #e5dfd0; }
+.juliana-page .jp-portrait img { display: block; width: 100%; height: auto; aspect-ratio: 600 / 760; object-fit: cover; }
+.juliana-page .jp-photo-label { position: absolute; bottom: 18px; left: 20px; padding: 7px 11px; background: #faf8f1; color: #46533b; border-radius: 3px; font-size: 9px; letter-spacing: .07em; text-transform: uppercase; }
+.juliana-page .jp-portrait figcaption { margin-top: 14px; font-size: 11px; color: var(--jp-muted); line-height: 1.8; }
+.juliana-page .jp-portrait figcaption span { font-size: 10px; }
+.juliana-page .jp-section-nav { border-block: 1px solid var(--jp-line); background: #f3f3ea; }
+.juliana-page .jp-section-links { display: flex; justify-content: space-between; gap: 25px; overflow-x: auto; padding-block: 5px; }
+.juliana-page .jp-section-links a { display: inline-flex; align-items: center; flex-shrink: 0; min-height: 48px; color: var(--jp-muted); font-size: 11px; }
+.juliana-page .jp-section-links a:hover { color: #263c29; text-decoration: underline; text-underline-offset: 5px; }
+.juliana-page .jp-section { padding-block: 85px; scroll-margin-top: 88px; }
+.juliana-page .jp-section-heading { margin-bottom: 40px; }
+.juliana-page .jp-heading { margin-top: 12px; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(32px, 3.7vw, 48px); font-weight: 400; letter-spacing: -.04em; line-height: 1.14; }
+.juliana-page .jp-body { color: var(--jp-muted); font-size: 14px; line-height: 1.95; }
+.juliana-page .jp-small-note { color: var(--jp-muted); font-size: 10px; line-height: 1.8; }
+.juliana-page .jp-story-layout { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 80px; }
+.juliana-page .jp-serif-lead { margin-bottom: 25px; font-family: Georgia, serif; font-size: 29px; line-height: 1.45; letter-spacing: -.02em; }
+.juliana-page .jp-serif-lead em { color: var(--jp-olive); }
+.juliana-page .jp-story-copy > .jp-body { margin-bottom: 18px; }
+.juliana-page .jp-story-copy > .jp-small-note { display: block; margin-top: 26px; padding-left: 15px; border-left: 2px solid #a6af92; }
+.juliana-page .jp-story-image img { display: block; width: 100%; height: auto; border-radius: 3px; }
+.juliana-page .jp-story-image figcaption { margin-top: 14px; font-family: Georgia, serif; font-size: 15px; color: var(--jp-muted); }
+.juliana-page .jp-story-image figcaption span { display: block; margin-top: 6px; font-family: Inter, sans-serif; font-size: 10px; line-height: 1.8; }
+.juliana-page .jp-trajectory { background: #eeeee3; border-block: 1px solid #e3e4d8; }
+.juliana-page .jp-trajectory-layout { display: grid; grid-template-columns: .8fr 1.2fr; gap: 90px; }
+.juliana-page .jp-trajectory-intro { max-width: 260px; margin-top: 22px; }
+.juliana-page .jp-large-leaf { margin-top: 34px; color: #82916c; transform: rotate(-20deg); }
+.juliana-page .jp-timeline article { display: flex; gap: 25px; padding-block: 24px; border-bottom: 1px solid #d2d8c5; }
+.juliana-page .jp-timeline article:first-child { padding-top: 0; }
+.juliana-page .jp-timeline-number { color: #788463; font-family: Georgia, serif; font-size: 18px; padding-top: 2px; }
+.juliana-page .jp-timeline h3 { margin-bottom: 10px; font-size: 17px; font-weight: 500; }
+.juliana-page .jp-approach-layout { display: grid; grid-template-columns: 1.15fr 1fr; gap: 80px; align-items: center; }
+.juliana-page .jp-approach-intro { margin-top: 25px; }
+.juliana-page .jp-principles { margin-top: 34px; }
+.juliana-page .jp-principles article { display: flex; gap: 18px; margin-top: 23px; }
+.juliana-page .jp-principles article > span { padding-top: 3px; color: #657554; font-size: 10px; }
+.juliana-page .jp-principles h3 { margin-bottom: 5px; font-size: 16px; font-weight: 500; }
+.juliana-page .jp-principles p { color: var(--jp-muted); font-size: 12px; line-height: 1.9; }
+.juliana-page .jp-manifesto { padding: 52px 42px; border-radius: 160px 160px 3px 3px; background: #46553a; color: #faf7eb; text-align: center; }
+.juliana-page .jp-manifesto > svg { margin: 14px auto 28px; color: #d5ddbe; }
+.juliana-page .jp-manifesto-quote { font-family: Georgia, serif; font-size: 33px; line-height: 1.35; letter-spacing: -.02em; }
+.juliana-page .jp-manifesto-rule { width: 45px; height: 1px; background: #96a282; margin: 29px auto; }
+.juliana-page .jp-manifesto > p:not(.jp-manifesto-quote) { font-size: 12px; line-height: 1.9; }
+.juliana-page .jp-manifesto > span { display: block; margin-top: 26px; font-size: 9px; color: #d5ddbe; }
+.juliana-page .jp-services-section { background: #f0f1e8; }
+.juliana-page .jp-heading-inline { display: flex; justify-content: space-between; align-items: end; gap: 30px; }
+.juliana-page .jp-heading-inline > p { font-size: 12px; }
+.juliana-page .jp-services { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.juliana-page .jp-service { padding: 34px; border: 1px solid #d7ddcb; border-radius: 4px; background: #fafaf3; }
+.juliana-page .jp-service--featured { border-color: #9eaa86; background: #f8f7ed; box-shadow: 0 12px 28px rgba(70, 85, 58, .08); }
+.juliana-page .jp-service--featured h3 { max-width: 390px; }
+.juliana-page .jp-service-top { display: flex; justify-content: space-between; color: var(--jp-olive); margin-bottom: 27px; }
+.juliana-page .jp-modality { color: var(--jp-olive); font-size: 10px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .07em; }
+.juliana-page .jp-service h3 { max-width: 270px; font-family: Georgia, serif; font-size: 25px; font-weight: 400; letter-spacing: -.02em; line-height: 1.3; margin-bottom: 17px; }
+.juliana-page .jp-service-status { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--jp-line); color: var(--jp-muted); font-size: 10px; line-height: 1.8; }
+.juliana-page .jp-service-whatsapp { margin-top: 25px; }
+.juliana-page .jp-service-note { margin-top: 23px; }
+.juliana-page .jp-faq-layout { display: grid; grid-template-columns: .75fr 1.25fr; gap: 70px; }
+.juliana-page .jp-faq-layout > div > .jp-body { max-width: 270px; margin-top: 20px; font-size: 12px; }
+.juliana-page .jp-faq-item { border-color: var(--jp-line); }
+.juliana-page .jp-faq-item:first-child { border-top: 1px solid var(--jp-line); }
+.juliana-page .jp-faq-trigger { min-height: 78px; gap: 20px; padding-block: 20px; text-align: left; font-size: 14px; color: var(--jp-ink); text-decoration: none; }
+.juliana-page .jp-faq-trigger:hover { text-decoration: none; color: var(--jp-olive); }
+.juliana-page .jp-faq-question { display: flex; gap: 22px; align-items: center; }
+.juliana-page .jp-faq-number { color: #697957; font-family: Georgia, serif; font-size: 12px; }
+.juliana-page .jp-faq-answer { padding-left: 37px; padding-right: 20px; color: var(--jp-muted); font-size: 13px; line-height: 1.95; }
+.juliana-page .jp-contact-section { padding-bottom: 80px; scroll-margin-top: 90px; }
+.juliana-page .jp-contact { padding: 60px 30px; background: #e9ecde; border-radius: 4px; text-align: center; }
+.juliana-page .jp-contact > svg { margin: 0 auto 17px; color: var(--jp-olive); }
+.juliana-page .jp-contact .jp-eyebrow { justify-content: center; }
+.juliana-page .jp-contact > p:not(.jp-eyebrow) { color: var(--jp-muted); font-size: 13px; line-height: 1.9; margin-top: 22px; }
+.juliana-page .jp-contact-actions { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 25px; margin-top: 25px; }
+.juliana-page .jp-contact > #contact-status { font-size: 10px; margin-top: 20px; }
+.juliana-page .jp-skip { position: fixed; top: 8px; left: 10px; z-index: 60; padding: 12px 20px; background: #303d2d; color: white; transform: translateY(-150%); }
+.juliana-page .jp-skip:focus { transform: translateY(0); }
+.juliana-page a:focus-visible, .juliana-page button:focus-visible, .juliana-page [tabindex="-1"]:focus-visible { outline: 3px solid #677b45; outline-offset: 5px; }
+@media (prefers-reduced-motion: no-preference) { .juliana-page .jp-enter { animation: jp-arrive .6s ease-out both; } }
+@keyframes jp-arrive { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 1024px) {
+  .juliana-page .jp-container { width: calc(100% - 64px); }
+  .juliana-page .jp-hero { gap: 36px; }
+  .juliana-page .jp-story-layout, .juliana-page .jp-trajectory-layout, .juliana-page .jp-approach-layout { gap: 42px; }
+  .juliana-page .jp-manifesto { padding: 45px 28px; }
+  .juliana-page .jp-faq-layout { gap: 40px; }
+}
+@media (max-width: 767px) {
+  .juliana-page .jp-container { width: calc(100% - 40px); }
+  .juliana-page .jp-preview-bar { align-items: flex-start; flex-direction: column; gap: 12px; padding-top: 22px; }
+  .juliana-page .jp-hero { grid-template-columns: 1fr; gap: 38px; padding-block: 30px 40px; }
+  .juliana-page .jp-display { font-size: clamp(60px, 15vw, 85px); }
+  .juliana-page .jp-hero-headline { font-size: 23px; }
+  .juliana-page .jp-hero-actions { gap: 18px; }
+  .juliana-page .jp-portrait { max-width: 390px; justify-self: center; }
+  .juliana-page .jp-portrait figcaption { text-align: center; }
+  .juliana-page .jp-section-links { justify-content: flex-start; gap: 24px; }
+  .juliana-page .jp-section { padding-block: 55px; }
+  .juliana-page .jp-section-heading { margin-bottom: 30px; }
+  .juliana-page .jp-story-layout, .juliana-page .jp-trajectory-layout, .juliana-page .jp-approach-layout, .juliana-page .jp-faq-layout { grid-template-columns: 1fr; gap: 32px; }
+  .juliana-page .jp-serif-lead { font-size: 26px; }
+  .juliana-page .jp-trajectory-intro, .juliana-page .jp-faq-layout > div > .jp-body { max-width: none; }
+  .juliana-page .jp-large-leaf { display: none; }
+  .juliana-page .jp-manifesto { max-width: 420px; width: 100%; justify-self: center; padding: 50px 35px; }
+  .juliana-page .jp-heading-inline { display: block; }
+  .juliana-page .jp-heading-inline > p { margin-top: 20px; }
+  .juliana-page .jp-services { grid-template-columns: 1fr; gap: 18px; }
+  .juliana-page .jp-service { padding: 28px; }
+  .juliana-page .jp-service h3 { max-width: none; }
+  .juliana-page .jp-faq-question { gap: 15px; }
+  .juliana-page .jp-faq-trigger { font-size: 13px; }
+  .juliana-page .jp-faq-answer { padding-left: 28px; }
+  .juliana-page .jp-contact-section { padding-bottom: 50px; }
+  .juliana-page .jp-contact { padding: 42px 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .juliana-page *, .juliana-page *::before, .juliana-page *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
