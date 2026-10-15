@@ -6,7 +6,7 @@ import { EDITORIAL_CATEGORIES, editorialCategoryPath, resolveEditorialCategory }
 import { getErrorMessage } from "./errors";
 import { AxiosError, AxiosHeaders } from "axios";
 import { getListingViewState } from "./listingState";
-import { composeHeroSlides } from "./heroSlides";
+import { composeHeroSlides, JULIANA_PROFESSIONAL_SLIDE } from "./heroSlides";
 
 describe("Conteúdo 2.0", () => {
   it("gera rotas canônicas por canal e formato", () => {
@@ -72,7 +72,9 @@ describe("Conteúdo 2.0", () => {
     expect(contentDropdown).toContain('event.key === "Escape"');
     expect(contentDropdown).toContain('contentButtonRef.current?.focus()');
     expect(navbar).toContain("aria-expanded=");
-    expect(navbar).not.toContain('to="/juliana"');
+    expect(navbar).toContain('to="/juliana"');
+    const app = readFileSync(resolve(process.cwd(), "src/App.tsx"), "utf8");
+    expect(app).toContain('path="/juliana"');
     expect(navbar).not.toContain('to="/atendimento"');
     expect(navbar).not.toContain('to="/agendar"');
     EDITORIAL_CATEGORIES.forEach((category) => {
@@ -155,5 +157,21 @@ describe("Conteúdo 2.0", () => {
       "post",
       "post",
     ]);
+
+    const hero = readFileSync(resolve(process.cwd(), "src/components/HeroCarousel.tsx"), "utf8");
+    const homepageSlides = composeHeroSlides(samplePosts, [JULIANA_PROFESSIONAL_SLIDE]);
+    expect(homepageSlides).toHaveLength(3);
+    expect(homepageSlides[0]).toMatchObject({
+      kind: "institutional",
+      id: "juliana-professional",
+      credential: "Nutricionista • CRN: 10/15292",
+      primaryAction: { label: "Conheça minha trajetória", to: "/juliana" },
+    });
+    expect(homepageSlides.slice(1).map((slide) => slide.kind)).toEqual(["post", "post"]);
+    expect(hero).toContain("getTopViewedPosts(2)");
+    expect(hero).toContain("JULIANA_PROFESSIONAL_SLIDE");
+    expect(hero).toContain('aria-label="Slide anterior"');
+    expect(hero).toContain('aria-label="Próximo slide"');
+    expect(hero).toContain('type="button"');
   });
 });

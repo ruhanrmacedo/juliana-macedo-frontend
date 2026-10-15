@@ -13,6 +13,7 @@ export type InstitutionalHeroSlide = {
   title: string;
   credential: string;
   message: string;
+  supportingMessage?: string;
   imageUrl: string;
   imageAlt: string;
   primaryAction: {
@@ -32,6 +33,23 @@ export type PostHeroSlide = {
 };
 
 export type HeroSlide = InstitutionalHeroSlide | PostHeroSlide;
+
+export const JULIANA_PROFESSIONAL_SLIDE: InstitutionalHeroSlide = {
+  kind: "institutional",
+  id: "juliana-professional",
+  title: "Conheça Juliana Macedo",
+  credential: "Nutricionista • CRN: 10/15292",
+  message:
+    "Uma trajetória que une formação em Nutrição, pós-graduação em Saúde Mental, experiência hospitalar e conhecimento sobre comportamento alimentar.",
+  supportingMessage:
+    "Uma abordagem baseada na ciência, no acolhimento e no respeito à individualidade.",
+  imageUrl: "/images/juliana/juliana-hero.png",
+  imageAlt: "Juliana Macedo, nutricionista.",
+  primaryAction: {
+    label: "Conheça minha trajetória",
+    to: "/juliana",
+  },
+};
 
 export function composeHeroSlides(
   posts: EditorialHeroPost[],

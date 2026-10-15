@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EditorialPost, getTopViewedPosts } from "@/lib/posts";
 import { stripHtml } from "@/lib/text";
-import { composeHeroSlides, HeroSlide } from "@/lib/heroSlides";
+import { composeHeroSlides, HeroSlide, JULIANA_PROFESSIONAL_SLIDE } from "@/lib/heroSlides";
 
 const HeroCarousel = () => {
   const [posts, setPosts] = useState<EditorialPost[]>([]);
@@ -13,7 +13,7 @@ const HeroCarousel = () => {
   useEffect(() => {
     const fetchTopPosts = async () => {
       try {
-        const data = await getTopViewedPosts(3);
+        const data = await getTopViewedPosts(2);
         setPosts(data.posts || []);
       } catch (err) {
         console.error("Erro ao buscar destaques", err);
@@ -23,7 +23,10 @@ const HeroCarousel = () => {
     fetchTopPosts();
   }, []);
 
-  const slides: HeroSlide[] = useMemo(() => composeHeroSlides(posts), [posts]);
+  const slides: HeroSlide[] = useMemo(
+    () => composeHeroSlides(posts, [JULIANA_PROFESSIONAL_SLIDE]),
+    [posts],
+  );
 
   const nextSlide = () =>
     setCurrentSlide((prev) => (slides.length ? (prev + 1) % slides.length : 0));
@@ -35,7 +38,7 @@ const HeroCarousel = () => {
   if (slides.length === 0) return null;
 
   return (
-    <div className="relative h-[400px] overflow-hidden bg-surface-secondary">
+    <div className="relative h-[560px] overflow-hidden bg-surface-secondary md:h-[430px]">
       <div
         className="h-full transition-transform duration-500 ease-out flex"
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
@@ -43,25 +46,24 @@ const HeroCarousel = () => {
         {slides.map((slide) => {
           if (slide.kind === "institutional") {
             return (
-              <div key={slide.id} className="relative h-full w-full flex-shrink-0">
-                <img
-                  src={slide.imageUrl}
-                  alt={slide.imageAlt}
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute inset-0 bg-emerald-950/70" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="container mx-auto px-4 text-center text-white">
-                    <p className="text-sm font-semibold uppercase tracking-wider text-emerald-200">
+              <div key={slide.id} className="h-full w-full flex-shrink-0 bg-[#f4f1e7]">
+                <div className="container mx-auto grid h-full grid-rows-[1fr_220px] px-4 md:grid-cols-[1.1fr_.9fr] md:grid-rows-1 md:px-8">
+                  <div className="flex min-w-0 flex-col justify-center py-9 text-left md:py-12">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#68754f]">
                       {slide.credential}
                     </p>
-                    <h2 className="mb-4 font-heading text-4xl font-bold md:text-5xl">
+                    <h2 className="mb-4 mt-3 font-heading text-4xl font-bold text-[#35422f] md:text-5xl">
                       {slide.title}
                     </h2>
-                    <p className="mx-auto mb-8 max-w-2xl text-lg md:text-xl text-emerald-50">
+                    <p className="mb-4 max-w-xl text-sm leading-relaxed text-[#526042] md:text-base">
                       {slide.message}
                     </p>
-                    <div className="flex flex-wrap items-center justify-center gap-4">
+                    {slide.supportingMessage && (
+                      <p className="mb-7 max-w-xl font-medium leading-relaxed text-[#35422f]">
+                        {slide.supportingMessage}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-4">
                       <button
                         type="button"
                         className="btn-primary"
@@ -79,6 +81,13 @@ const HeroCarousel = () => {
                         </button>
                       )}
                     </div>
+                  </div>
+                  <div className="relative min-h-0 overflow-hidden rounded-t-[120px] bg-[#d8d4c4] md:rounded-none md:rounded-l-[170px]">
+                    <img
+                      src={slide.imageUrl}
+                      alt={slide.imageAlt}
+                      className="h-full w-full object-cover object-[center_25%]"
+                    />
                   </div>
                 </div>
               </div>
