@@ -1,4 +1,5 @@
-import { Facebook, Instagram, Linkedin } from "lucide-react";
+import { Instagram, Linkedin, MessageCircle } from "lucide-react";
+import { buildWhatsAppUrl } from "@/utils/whatsapp";
 
 const Footer = () => {
   return (
@@ -9,6 +10,9 @@ const Footer = () => {
             <h3 className="font-heading text-2xl font-bold mb-3">
               Juliana Macedo
             </h3>
+            <p className="mb-3 text-sm font-medium text-white/90">
+              Nutricionista • CRN: 10/15292
+            </p>
 
             <p className="text-white/80 leading-relaxed">
               Conteúdos sobre nutrição, saúde e bem-estar para ajudar você a
@@ -33,13 +37,13 @@ const Footer = () => {
               </a>
 
               <a
-                href="https://www.facebook.com/juliana.lacerdamacedo.1"
+                href={buildWhatsAppUrl("Olá, Juliana! Conheci seu site e gostaria de saber mais sobre seu atendimento nutricional.")}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Facebook"
+                aria-label="Conversar com Juliana no WhatsApp"
                 className="rounded-full bg-white/10 p-3 hover:bg-white/20 transition-colors"
               >
-                <Facebook size={22} />
+                <MessageCircle size={22} />
               </a>
 
               <a
@@ -57,7 +61,7 @@ const Footer = () => {
 
         <div className="mt-10 border-t border-white/20 pt-6 text-center text-sm text-white/70">
           <p>
-            &copy; 2026 Juliana Macedo Vida & Sabor. Todos os direitos
+            &copy; 2026 Juliana Macedo. Todos os direitos
             reservados.
           </p>
 
